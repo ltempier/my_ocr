@@ -2,66 +2,64 @@
 
 var fs = require('fs'),
     async = require('async'),
-    TesseractProcess = require('./components/TesseractProcess'),
+    TesseractProcess = require('./server/components/TesseractProcess'),
+    File = require('./server/components/File'),
     elasticsearch = require('elasticsearch');
 
 
 var client = new elasticsearch.Client({
     host: 'localhost:9200',
-    //log: 'trace'
+    log: 'trace'
 });
 
-//client.indices.create({index: 'files'}, function(err){
-//    if (err)
-//        console.error(err);
-//});
-
-//var p = new TesseractProcess(__dirname + '/example/4.png');
-//
+//var f = new File(__dirname + '/example/1.png');
+//var p = new TesseractProcess(f);
 //p.process(function (err, res) {
-//    if (err){
-//        console.error(err);
-//        next()
-//    }
+//    if (err)
+//        exit(err);
 //    else {
-//
 //        console.log('res:', res);
-//
 //        client.index({
 //            index: 'files',
 //            type: 'file',
 //            body: res
-//        }, next);
+//        }, exit);
 //    }
 //});
 
-//
 fs.readdir(__dirname + '/example/', (err, files) => {
     if (err)
         exit(err);
-    async.eachLimit(files, 5,function (file, next) {
-
-        var p = new TesseractProcess(__dirname + '/example/' + file);
+    async.eachLimit(files, 5, function (file, next) {
+        var f = new File(__dirname + '/example/' + file);
+        var p = new TesseractProcess(f, {
+            force: true
+        });
         p.process(function (err, res) {
             if (err) {
                 console.error(err);
                 next()
             }
             else {
-
                 console.log('');
                 console.log('file ', file);
                 console.log('res:', res);
-
-                client.index({
-                    index: 'files',
-                    type: 'file',
-                    body: res
-                }, function (err) {
+                f.save(function (err) {
                     if (err)
                         console.error(err);
-                    next()
-                });
+
+                    client.index({
+                        index: 'files',
+                        type: 'file',
+                        body: res
+                    }, function (err) {
+                        if (err)
+                            console.error(err);
+                        next()
+                    });
+                })
+
+
             }
         });
     }, exit)

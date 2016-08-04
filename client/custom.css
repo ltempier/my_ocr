@@ -1,0 +1,10 @@
+
+img {
+    max-width: 300px;
+    max-height: 400px;
+}
+
+.page-header {
+    border-bottom: none;
+}
+

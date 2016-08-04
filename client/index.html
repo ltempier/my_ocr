@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="//bootswatch.com/cosmo/bootstrap.min.css" rel="stylesheet"/>
+    <link href="custom.css" rel="stylesheet"/>
+
+</head>
+<body>
+
+<div class="container">
+    <div class="page-header">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search" onkeyup="search(this.value)">
+            <span class="input-group-btn">
+                <button class="btn btn-default" type="button" onclick="upload()">Upload</button>
+            </span>
+        </div>
+    </div>
+    <div id="results" class="row"></div>
+</div>
+
+<script src="jquery.min.js"></script>
+<script src="main.js"></script>
+
+
+</body>
+</html>
