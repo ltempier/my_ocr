@@ -34,14 +34,24 @@ class File {
     }
 
     save(cb) {
-        fs.rename(this.originalFilePath, this.destFilePath, (rnErr) => {
-            fs.unlink(this.tmpFilePath, function (ulErr) {
-                if (rnErr || ulErr)
-                    cb([rnErr, ulErr]);
-                else
-                    cb()
-            })
-        })
+        if (cb && typeof cb === "function")
+            fs.rename(this.originalFilePath, this.destFilePath, (rnErr) => {
+                fs.unlink(this.tmpFilePath, function (ulErr) {
+                    if (rnErr || ulErr)
+                        cb([rnErr, ulErr]);
+                    else
+                        cb()
+                })
+            });
+        else {
+            try {
+                fs.renameSync(this.originalFilePath, this.destFilePath);
+                fs.unlinkSync(this.tmpFilePath)
+            }
+            catch (e) {
+                console.error(e)
+            }
+        }
     }
 
     exists(filePath, cb) {
@@ -97,7 +107,7 @@ class File {
     }
 
     static getUrl(hash) {
-        return '/' + path.join(config.filesDir, hash);
+        return '/api/files/' + hash;
     }
 }
 

@@ -18,11 +18,17 @@ var testDir = __dirname + '/test',
 
 //try {
 //    fs.mkdirSync(testDir);
-//} finally {
-//    var fileName = '1.png';
+//}
+//catch(e){}
+//finally {
+//    var fileName = 'bp_aout.JPG';
 //    fs.copySync(exDir + "/" + fileName, testDir + "/" + fileName);
 //    var f = new File(testDir + "/" + fileName);
-//    var p = new TesseractProcess(f);
+//
+//    var p = new TesseractProcess(f, {
+//        force: true
+//    });
+//
 //    p.process(function (err, res) {
 //        if (err)
 //            exit(err);
@@ -40,7 +46,9 @@ var testDir = __dirname + '/test',
 
 try {
     fs.mkdirSync(testDir);
-} finally {
+}
+catch(e){}
+ finally {
     var files = fs.readdirSync(exDir);
     async.eachLimit(files, 5, function (fileName, next) {
         fs.copySync(exDir + "/" + fileName, testDir + "/" + fileName);
@@ -55,7 +63,7 @@ try {
             }
             else {
                 console.log('');
-                console.log('file ', file);
+                console.log('file ', fileName);
                 console.log('res:', res);
                 f.save(function (err) {
                     if (err)

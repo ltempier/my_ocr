@@ -11,7 +11,8 @@ var all = {
     root: root,
     filesDir: 'files',
     tmpDir: 'tmp',
-    elasticsearch: {}
+    elasticsearch: {},
+    secret:'MY ocr secret 123'
 };
 
 module.exports = _.extend(all, require('./env/' + process.env.NODE_ENV + '.js') || {});

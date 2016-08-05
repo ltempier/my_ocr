@@ -12,6 +12,7 @@ class TesseractProcess {
     constructor(file, options) {
         this.language = "fra+eng";
         this.file = file;
+        this.log = false;
 
         _.each(options, (value, key) => {
             if (!_.isUndefined(value) && !_.isNull(value))
@@ -47,7 +48,9 @@ class TesseractProcess {
     }
 
     parse(filePath, cb) {
-        var command = ['tesseract', filePath, 'stdout', '-l', this.language].join(' ');
+        if (this.log)
+            console.log('start parse image ' + filePath);
+        var command = ['tesseract', filePath, 'stdout', '-l', this.language, '-psm 3'].join(' ');
         exec(command, (error, stdout) => {
             if (error)
                 cb(error);
@@ -67,30 +70,20 @@ class TesseractProcess {
     }
 
     performTo(tmpFilePath, cb) {
+        if (this.log)
+            console.log('start perform image ' + this.file.originalFilePath + ' -> ' + tmpFilePath);
         Jimp.read(this.file.originalFilePath, (err, image) => {
-            if (err)
-                return cb(err);
-            var command = ['tesseract', this.file.originalFilePath, 'stdout', '-l', this.language, '-psm 0'].join(' ');
-            exec(command, function (error, stdout) {
-                if (error)
-                    cb(error);
+                if (err)
+                    cb(err);
                 else {
-                    try {
-                        stdout.split('\n').forEach(function (line) {
-                            var res = line.split(':');
-                            if (res[0] == 'Rotate')
-                                image.rotate(parseInt(res[1]))
-                        });
-                    }
-                    finally {
-                        //image.quality(80)
-                        //    .greyscale()
-                        //    .contrast(0.5);
-                        image.write(tmpFilePath, cb);
-                    }
+                    image
+                        .autocrop()
+                        .greyscale();
+
+                    image.write(tmpFilePath, cb);
                 }
-            })
-        })
+            }
+        )
     }
 
     check(cb) {
@@ -111,4 +104,6 @@ class TesseractProcess {
     }
 }
 
-module.exports = TesseractProcess;
+module
+    .
+    exports = TesseractProcess;
