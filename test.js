@@ -1,6 +1,6 @@
 'use strict';
 
-var fs = require('fs'),
+var fs = require('fs-extra'),
     async = require('async'),
     TesseractProcess = require('./server/components/TesseractProcess'),
     File = require('./server/components/File'),
@@ -12,26 +12,39 @@ var client = new elasticsearch.Client({
     log: 'trace'
 });
 
-//var f = new File(__dirname + '/example/1.png');
-//var p = new TesseractProcess(f);
-//p.process(function (err, res) {
-//    if (err)
-//        exit(err);
-//    else {
-//        console.log('res:', res);
-//        client.index({
-//            index: 'files',
-//            type: 'file',
-//            body: res
-//        }, exit);
-//    }
-//});
+var testDir = __dirname + '/test',
+    exDir = __dirname + '/example';
 
-fs.readdir(__dirname + '/example/', (err, files) => {
-    if (err)
-        exit(err);
-    async.eachLimit(files, 5, function (file, next) {
-        var f = new File(__dirname + '/example/' + file);
+
+//try {
+//    fs.mkdirSync(testDir);
+//} finally {
+//    var fileName = '1.png';
+//    fs.copySync(exDir + "/" + fileName, testDir + "/" + fileName);
+//    var f = new File(testDir + "/" + fileName);
+//    var p = new TesseractProcess(f);
+//    p.process(function (err, res) {
+//        if (err)
+//            exit(err);
+//        else {
+//            console.log('res:', res);
+//            client.index({
+//                index: 'files',
+//                type: 'file',
+//                body: res
+//            }, exit);
+//        }
+//    });
+//}
+
+
+try {
+    fs.mkdirSync(testDir);
+} finally {
+    var files = fs.readdirSync(exDir);
+    async.eachLimit(files, 5, function (fileName, next) {
+        fs.copySync(exDir + "/" + fileName, testDir + "/" + fileName);
+        var f = new File(testDir + "/" + fileName);
         var p = new TesseractProcess(f, {
             force: true
         });
@@ -63,12 +76,16 @@ fs.readdir(__dirname + '/example/', (err, files) => {
             }
         });
     }, exit)
-});
+}
 
 function exit(err) {
     if (err)
         console.error(err);
     if (client)
         client.close();
-    process.exit(err ? 1 : 0)
+    try {
+        fs.removeSync(testDir)
+    } finally {
+        process.exit(err ? 1 : 0)
+    }
 }
