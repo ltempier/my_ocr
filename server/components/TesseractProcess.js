@@ -37,7 +37,12 @@ class TesseractProcess {
 
         function end(err, text) {
             if (err)
-                cb(err);
+                cb(null, {
+                    date: Date.now(),
+                    file: this.file.getInfo(),
+                    error: true,
+                    text: ""
+                });
             else
                 cb(null, {
                     date: Date.now(),

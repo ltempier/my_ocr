@@ -2,30 +2,111 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title></title>
-
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
-    <link href="//bootswatch.com/cosmo/bootstrap.min.css" rel="stylesheet"/>
-    <link href="custom.css" rel="stylesheet"/>
-
+    <title>My OCR</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="css/custom.css" rel="stylesheet"/>
 </head>
 <body>
 
-<div class="container">
-    <div class="page-header">
-        <div class="input-group">
-            <input type="text" class="form-control" placeholder="Search" onkeyup="search(this.value)">
-            <span class="input-group-btn">
-                <button class="btn btn-default" type="button" onclick="upload()">Upload</button>
-            </span>
+<section id="section-auth">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="page-header">
+                    <h1>Auth</h1>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <form id="auth-form" class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-lg-2 control-label">Login</label>
+
+                        <div class="col-lg-10">
+                            <input type="text" class="form-control" name="login">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-lg-2 control-label">Password</label>
+
+                        <div class="col-lg-10">
+                            <input type="password" class="form-control" name="pwd">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-lg-10 col-lg-offset-2">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-    <div id="results" class="row"></div>
+</section>
+
+<section id="section-app">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="page-header">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" onkeyup="search(this.value)">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" data-toggle="modal"
+                                    data-target="#upload-modal">Upload
+                            </button>
+                        </span>
+                    </div>
+                </div>
+                <div id="results" class="row"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="upload-modal" class="modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Upload files</h4>
+            </div>
+            <form id="upload-form" action="" class="form-horizontal">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="form-group">
+                                <label class="col-lg-2 control-label">Files</label>
+
+                                <div class="col-lg-10">
+                                    <span class="btn btn-success btn-file">
+                                        Select files <input type="file" accept="image/*" multiple name="file"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-lg-2 control-label">Tags</label>
+                                <div class="col-lg-10">
+                                    <input type="text" class="form-control" placeholder="tags" name="tags"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
-<script src="jquery.min.js"></script>
-<script src="main.js"></script>
-<script>search('')</script>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/main.js"></script>
 
 </body>
 </html>

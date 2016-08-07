@@ -14,15 +14,17 @@ class Security {
     }
 
     middleware(req, res, next) {
-        var token = req.body.token || req.query.token || req.headers['x-access-token'];
+        var token = (req.body.token || req.query.token || req.headers['x-access-token']).toString();
         if (req.url == "/auth")
             next();
         else if (token) {
-            jwt.verify(token, config.secret, function (err) {
+            jwt.verify(token, config.secret, function (err, user) {
                 if (err)
                     return res.status(401).json({success: false, message: 'Failed to authenticate token.'});
-                else
+                else {
+                    req.user = user;
                     next();
+                }
             });
         }
         else

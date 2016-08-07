@@ -98,6 +98,15 @@ class File {
         }
     }
 
+    static initFileDir() {
+        [config.tmpDir, config.filesDir].forEach(function (dirName) {
+            var dirPath = path.join(config.root, dirName);
+            if (!fs.existsSync(dirPath)) {
+                fs.mkdirSync(dirPath);
+            }
+        })
+    }
+
     static getTmpPath(fileName) {
         return path.join(config.root, config.tmpDir, fileName) + '.jpg';
     }

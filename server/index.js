@@ -6,6 +6,7 @@ var express = require('express'),
     multipart = require('connect-multiparty'),
     config = require('./config'),
     path = require('path'),
+    async = require('async'),
     elasticsearch = require('elasticsearch'),
     app = express(),
     api = express.Router();
@@ -15,6 +16,8 @@ var File = require('./components/File'),
     security = require('./components/security'),
     client = new elasticsearch.Client(config.elasticsearch);
 
+File.initFileDir();
+
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 app.use(methodOverride());
@@ -22,12 +25,7 @@ app.use(multipart({
     uploadDir: path.join(config.root, config.tmpDir)
 }));
 
-
 app.use(express.static(path.join(config.root, 'client')));
-app.get('/auth', function (req, res) {
-    res.sendFile(path.join(config.root, 'client', 'auth.html'))
-});
-
 
 try {
     var users = require('./access.json');
@@ -55,56 +53,45 @@ try {
     }
 }
 catch (e) {
-    console.log("Warning no auth")
+    console.log("Warning no auth (" + e.message + ")")
 }
 
 api.route('/files')
     .post(function (req, res) {
         if (req.files && req.files.file) {
-            var file = new File(req.files.file.path, {
-                fileName: req.files.file.originalFilename
-            });
-            var tesseract = new TesseractProcess(file, {force: true});
+            var files = req.files.file;
+            if (!req.files.file.length)
+                files = [files];
 
             res.sendStatus(200);
 
-            tesseract.process(function (err, body) {
-                if (err)
-                    console.error(err);
-                else {
+            async.forEach(files, function (f, next) {
+                var file = new File(f.path, {
+                    fileName: f.originalFilename
+                });
+                var tesseract = new TesseractProcess(file, {force: true});
+                tesseract.process(function (err, body) {
+                    if (err)
+                        console.error(err);
                     file.save();
+
+                    body.tags = (req.body.tags || "").split(' ');
+                    body.user = {
+                        id: req.user.id,
+                        login: req.user.login
+                    };
                     client.index({
                         index: 'files',
                         type: 'file',
-                        analysis: {
-                            index_analyzer: {
-                                my_index_analyzer: {
-                                    type: "custom",
-                                    tokenizer: "standard",
-                                    filter: ["lowercase", "mynGram"]
-                                }
-                            },
-                            search_analyzer: {
-                                "my_search_analyzer": {
-                                    type: "custom",
-                                    tokenizer: "standard",
-                                    filter: ["standard", "lowercase", "mynGram"]
-                                }
-                            },
-                            filter: {
-                                mynGram: {
-                                    type: "nGram",
-                                    min_gram: 2,
-                                    max_gram: 50
-                                }
-                            }
-                        },
                         body: body
                     }, function (err) {
                         if (err)
-                            console.error(err)
+                            console.error(err);
+                        next()
                     });
-                }
+                })
+            }, function () {
+
             })
         }
         else

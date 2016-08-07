@@ -3,22 +3,51 @@
 var oldQuery = null,
     token = window.localStorage.token;
 
-$('#authForm').on('submit', function (e) {
+$(document).ready(function () {
+    if (token)
+        showApp();
+    else
+        showAuth();
+    $('#auth-form').on('submit', auth);
+    $('#upload-form').on('submit', upload)
+});
+
+function showApp() {
+    $('#section-auth').hide();
+    $('#section-app').show();
+    search('');
+}
+
+function showAuth() {
+    $('#section-auth').show();
+    $('#section-app').hide();
+    closeModal()
+}
+
+function closeModal() {
+    $('#upload-modal').modal('hide');
+}
+
+function auth(e) {
     e.preventDefault();
     $.ajax({
         url: '/auth',
         type: 'POST',
         data: $(this).serialize(),
         success: function (results) {
-            if (results.success && results.token)
+            if (results.success && results.token) {
                 window.localStorage.token = results.token;
-            window.location.href = "/"
+                showApp()
+            }
         },
         error: function (err) {
-            console.log(err)
+            console.log(err);
+            if (err.status != 500)
+                showAuth()
         }
     })
-});
+}
+
 
 function search(value) {
     var query = value.split(' ').join('+');
@@ -61,41 +90,41 @@ function search(value) {
             })
         },
         error: function (err) {
-            console.log(err)
+            console.log(err);
+            if (err.status != 500)
+                showAuth()
         }
     });
 }
 
-function upload() {
-    var $form = $([
-        '<form method="POST" enctype="multipart/form-data" action="/files">',
-        '<input type="text" name="token" value="' + window.localStorage.token + '"/>',
-        '<input type="file" accept="image/*" multiple name="file"/>',
-        '</form>'
-    ].join(''));
+function upload(e) {
+    e.preventDefault();
 
-    var $input = $form.find('input');
-    $input.on('change', function () {
-        $form.submit();
-    });
+    var $form = $(this),
+        $input = $form.find('input[name=token]');
 
-    $form.on('submit', function (e) {
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: "/api/files",
-            enctype: 'multipart/form-data',
-            data: new FormData(this),
-            processData: false,
-            contentType: false,
-            success: function () {
-                alert("Data Uploaded: ");
-            },
-            error: function (err) {
-                console.log(err)
-            }
-        });
+    if ($input && $input.length)
+        $input.attr('value', token);
+    else
+        $('<input type="text" name="token">')
+            .attr('type', 'hidden')
+            .attr('value', token)
+            .appendTo($form);
+
+    $.ajax({
+        type: "POST",
+        url: "/api/files",
+        enctype: 'multipart/form-data',
+        data: new FormData(this),
+        processData: false,
+        contentType: false,
+        success: function () {
+            closeModal();
+        },
+        error: function (err) {
+            console.log(err);
+            if (err.status != 500)
+                showAuth()
+        }
     });
-    $input.click();
 }
-
