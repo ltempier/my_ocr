@@ -13,6 +13,7 @@ var express = require('express'),
 
 var File = require('./components/File'),
     TesseractProcess = require('./components/TesseractProcess'),
+    TikaProcess = require('./components/TikaProcess'),
     security = require('./components/security'),
     client = new elasticsearch.Client(config.elasticsearch);
 
@@ -62,15 +63,22 @@ api.route('/files')
             var files = req.files.file;
             if (!req.files.file.length)
                 files = [files];
+
             res.sendStatus(200);
 
             async.forEach(files, function (f, next) {
                 var file = new File(f.path, {
                     fileName: f.originalFilename
-                });
+                }), ocr = null;
 
-                var tesseract = new TesseractProcess(file);
-                tesseract.process(function (err, body) {
+                if (file.tikaSupport())
+                    ocr = new TikaProcess(file);
+                else if (file.tesseractSupport())
+                    ocr = new TesseractProcess(file);
+                else
+                    return next();
+
+                ocr.process(function (err, body) {
                     if (err)
                         console.error(err);
 
@@ -109,17 +117,24 @@ api.route('/parse')
                 files = [files];
 
             async.forEach(files, function (f, next) {
-                var file = new File(f.path),
-                    result = {
-                        fileName: f.originalFilename
-                    };
-                var tesseract = new TesseractProcess(file, {
-                    force: true
-                });
-                tesseract.process(function (err, body) {
+                var file = new File(f.path), result = {
+                    fileName: f.originalFilename
+                }, ocr = null;
+
+                if (file.tikaSupport())
+                    ocr = new TikaProcess(file, {
+                        force: true
+                    });
+                else if (file.tesseractSupport())
+                    ocr = new TesseractProcess(file, {
+                        force: true
+                    });
+                else
+                    return next();
+
+                ocr.process(function (err, body) {
                     if (err)
                         console.error(err);
-
                     result.text = body.text;
                     results.push(result);
                     file.clear();

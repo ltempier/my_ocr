@@ -3,6 +3,7 @@
 var fs = require('fs-extra'),
     async = require('async'),
     TesseractProcess = require('./server/components/TesseractProcess'),
+    TikaProcess = require('./server/components/TikaProcess'),
     File = require('./server/components/File'),
     elasticsearch = require('elasticsearch');
 
@@ -14,6 +15,31 @@ var client = new elasticsearch.Client({
 
 var testDir = __dirname + '/test',
     exDir = __dirname + '/example';
+
+
+try {
+    fs.mkdirSync(testDir);
+}
+catch (e) {
+}
+finally {
+    var fileName = 'test.pdf';
+    fs.copySync(exDir + "/" + fileName, testDir + "/" + fileName);
+    var f = new File(testDir + "/" + fileName);
+
+
+    console.log('tesseract ' + f.tesseractSupport())
+    console.log('tike ' + f.tikaSupport())
+
+    var p = new TikaProcess(f, {
+        force: true
+    });
+
+    p.process(function (err, res) {
+        console.log('res:', res.text);
+        exit(err)
+    });
+}
 
 
 //try {
@@ -44,47 +70,47 @@ var testDir = __dirname + '/test',
 //}
 
 
-try {
-    fs.mkdirSync(testDir);
-}
-catch(e){}
- finally {
-    var files = fs.readdirSync(exDir);
-    async.eachLimit(files, 5, function (fileName, next) {
-        fs.copySync(exDir + "/" + fileName, testDir + "/" + fileName);
-        var f = new File(testDir + "/" + fileName);
-        var p = new TesseractProcess(f, {
-            force: true
-        });
-        p.process(function (err, res) {
-            if (err) {
-                console.error(err);
-                next()
-            }
-            else {
-                console.log('');
-                console.log('file ', fileName);
-                console.log('res:', res);
-                f.save(function (err) {
-                    if (err)
-                        console.error(err);
-
-                    client.index({
-                        index: 'files',
-                        type: 'file',
-                        body: res
-                    }, function (err) {
-                        if (err)
-                            console.error(err);
-                        next()
-                    });
-                })
-
-
-            }
-        });
-    }, exit)
-}
+//try {
+//    fs.mkdirSync(testDir);
+//}
+//catch(e){}
+// finally {
+//    var files = fs.readdirSync(exDir);
+//    async.eachLimit(files, 5, function (fileName, next) {
+//        fs.copySync(exDir + "/" + fileName, testDir + "/" + fileName);
+//        var f = new File(testDir + "/" + fileName);
+//        var p = new TesseractProcess(f, {
+//            force: true
+//        });
+//        p.process(function (err, res) {
+//            if (err) {
+//                console.error(err);
+//                next()
+//            }
+//            else {
+//                console.log('');
+//                console.log('file ', fileName);
+//                console.log('res:', res);
+//                f.save(function (err) {
+//                    if (err)
+//                        console.error(err);
+//
+//                    client.index({
+//                        index: 'files',
+//                        type: 'file',
+//                        body: res
+//                    }, function (err) {
+//                        if (err)
+//                            console.error(err);
+//                        next()
+//                    });
+//                })
+//
+//
+//            }
+//        });
+//    }, exit)
+//}
 
 function exit(err) {
     if (err)

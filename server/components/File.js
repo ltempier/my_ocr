@@ -26,6 +26,15 @@ class File {
         this.url = File.getUrl(this.getHash())
     }
 
+
+    tesseractSupport() {
+        return (/^image\//i).test(this.mime)
+    }
+
+    tikaSupport() {
+        return (/^application\//i).test(this.mime)
+    }
+
     download(res) {
         res.setHeader('Content-type', this.mime);
         res.setHeader('Content-disposition', 'attachment; filename=' + this.fileName);
@@ -41,7 +50,7 @@ class File {
         })
     }
 
-    save() {
+    save(cb) {
         if (cb && typeof cb === "function")
             fs.rename(this.originalFilePath, this.destFilePath, (rnErr) => {
                 fs.unlink(this.tmpFilePath, function (ulErr) {

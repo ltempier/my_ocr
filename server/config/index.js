@@ -12,7 +12,9 @@ var all = {
     filesDir: 'files',
     tmpDir: 'tmp',
     elasticsearch: {},
-    secret:'MY ocr secret 123'
+    secret: 'MY ocr secret 123',
+    TESSDATA_PREFIX: root,
+    TIKA_APP_JAR: path.join(root, 'tika-app-1.13.jar')
 };
 
 module.exports = _.extend(all, require('./env/' + process.env.NODE_ENV + '.js') || {});

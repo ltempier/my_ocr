@@ -53,6 +53,7 @@ function search(value) {
     var query = value.split(' ').join('+');
     if (oldQuery && oldQuery == query)
         return;
+
     $.ajax({
         url: '/api/search',
         type: 'GET',

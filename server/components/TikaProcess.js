@@ -1,16 +1,14 @@
 'use strict';
 
 var exec = require('child_process').exec,
-    Jimp = require("jimp"),
     _ = require('lodash'),
+    path = require('path'),
     config = require('../config');
 
-process.env.TESSDATA_PREFIX = config.TESSDATA_PREFIX;
 
-class TesseractProcess {
+class TikaProcess {
 
     constructor(file, options) {
-        this.language = "fra+eng";
         this.file = file;
         this.log = false;
 
@@ -18,24 +16,14 @@ class TesseractProcess {
             if (!_.isUndefined(value) && !_.isNull(value))
                 this[key] = value
         });
-
-
-
     }
 
     process(cb) {
         this.check((err) => {
             if (err)
                 cb(err);
-            else {
-                var filePath = this.file.tmpFilePath;
-                this.performImage(filePath, (err) => {
-                    if (err)
-                        this.text(this.file.originalFilePath, end.bind(this));
-                    else
-                        this.text(filePath, end.bind(this))
-                })
-            }
+            else
+                this.text(this.file.originalFilePath, end.bind(this));
         });
 
         function end(err, text) {
@@ -57,9 +45,9 @@ class TesseractProcess {
 
     text(filePath, cb) {
         if (this.log)
-            console.log('start parse image ' + filePath);
+            console.log('start parse file ' + filePath);
 
-        var command = ['tesseract', filePath, 'stdout', '-l', this.language, '-psm 3'].join(' ');
+        var command = ['java', '-jar', config.TIKA_APP_JAR, '-t', this.file.originalFilePath].join(' ');
         exec(command, (error, stdout) => {
             if (error)
                 cb(error);
@@ -73,26 +61,10 @@ class TesseractProcess {
                     line = line.replace(/\.\.+/g, '.');
                     return line
                 }).join('\n');
+
                 cb(null, text)
             }
         })
-    }
-
-    performImage(tmpFilePath, cb) {
-        if (this.log)
-            console.log('start perform image ' + this.file.originalFilePath + ' -> ' + tmpFilePath);
-        Jimp.read(this.file.originalFilePath, (err, image) => {
-                if (err)
-                    cb(err);
-                else {
-                    image
-                        .autocrop()
-                        .greyscale();
-
-                    image.write(tmpFilePath, cb);
-                }
-            }
-        )
     }
 
     check(cb) {
@@ -108,9 +80,8 @@ class TesseractProcess {
                     else
                         cb()
                 })
-
         })
     }
 }
 
-module.exports = TesseractProcess;
+module.exports = TikaProcess;

@@ -16,14 +16,23 @@ rm tessdata.zip
 mv tessdata-* tessdata
 ```
 
-Command line:
+Test command line:
 ```sh
-export TESSDATA_PREFIX=/home/laurent/Git/my_ocr/tessdata
+export TESSDATA_PREFIX=/.../my_ocr/tessdata
 tesseract  --tessdata-dir ./tessdata/ ./example/IMG_3336.png stdout -l fra -psm 0
 ```
 
 
+Install tika
 
+```sh
+wget http://apache.crihan.fr/dist/tika/tika-app-1.13.jar
+```
+
+Test command line:
+```sh
+java -jar tika-app-1.13.jar -t ./example/*.pdf
+```
 
 TODO:
 - dockerfile
