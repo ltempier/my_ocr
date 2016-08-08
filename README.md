@@ -1,6 +1,3 @@
-
-
-
 Install tesseract
 
 ```sh
@@ -22,7 +19,6 @@ export TESSDATA_PREFIX=/.../my_ocr/tessdata
 tesseract  --tessdata-dir ./tessdata/ ./example/IMG_3336.png stdout -l fra -psm 0
 ```
 
-
 Install tika
 
 ```sh
@@ -34,10 +30,10 @@ Test command line:
 java -jar tika-app-1.13.jar -t ./example/*.pdf
 ```
 
-TODO:
-- dockerfile
-- add tike -> pdf, word, ... files
-
+Start server
+```sh
+node server/index.js
+```
 
 Test API:
 ```sh
@@ -48,3 +44,7 @@ curl -i -F token=[my_token] \
 localhost:3000/api/parse
 ```
 
+TODO:
+- dockerfile
+- perform ui
+- perform search nGram
