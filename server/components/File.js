@@ -2,7 +2,7 @@
 
 var path = require('path'),
     mime = require('mime'),
-    fs = require('fs'),
+    fs = require('fs-extra'),
     config = require('../config'),
     _ = require('lodash'),
     crypto = require('crypto');
@@ -26,6 +26,24 @@ class File {
         this.url = File.getUrl(this.getHash())
     }
 
+    check(force, cb) {
+        if (typeof force === "function")
+            cb = force;
+
+        this.exists((exists) => {
+            if (!exists)
+                cb(new Error('Original file not exist'));
+            else if (force == true)
+                cb();
+            else
+                this.exists(this.destFilePath, function (exists) {
+                    if (exists)
+                        cb(new Error('File already process'));
+                    else
+                        cb()
+                })
+        })
+    }
 
     tesseractSupport() {
         return (/^image\//i).test(this.mime)
@@ -33,6 +51,10 @@ class File {
 
     tikaSupport() {
         return (/^application\//i).test(this.mime)
+    }
+
+    textSupport() {
+        return (/^text\//i).test(this.mime)
     }
 
     download(res) {
@@ -69,6 +91,10 @@ class File {
                 console.error(e)
             }
         }
+    }
+
+    moveToTmp(cb) {
+        fs.move(this.originalFilePath, this.tmpFilePath, cb)
     }
 
     exists(filePath, cb) {

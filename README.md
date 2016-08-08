@@ -2,9 +2,13 @@ Install tesseract
 
 ```sh
 sudo apt-get install tesseract-ocr
-
+```
+or
+```sh
 brew install tesseract
 ```
+
+tesseract database
 
 ```sh
 wget https://github.com/tesseract-ocr/tessdata/archive/master.zip  -O  tessdata.zip

@@ -1,12 +1,11 @@
 'use strict';
 
-var exec = require('child_process').exec,
-    _ = require('lodash'),
-    fs = require('fs-extra'),
+var _ = require('lodash'),
+    fs = require('fs'),
     config = require('../config');
 
 
-class TikaProcess {
+class TextProcess {
 
     constructor(file, options) {
         this.file = file;
@@ -19,12 +18,7 @@ class TikaProcess {
     }
 
     process(cb) {
-        this.file.moveToTmp((err) => {
-            if (err)
-                this.text(this.file.originalFilePath, end.bind(this));
-            else
-                this.text(this.file.tmpFilePath, end.bind(this))
-        });
+        this.text(this.file.originalFilePath, end.bind(this));
 
         function end(err, text) {
             if (err)
@@ -47,8 +41,7 @@ class TikaProcess {
         if (this.log)
             console.log('start parse file ' + filePath);
 
-        var command = ['java', '-jar', config.TIKA_APP_JAR, '-t', filePath].join(' ');
-        exec(command, (error, stdout) => {
+        fs.readFile(filePath, 'utf8', function (error, stdout) {
             if (error)
                 cb(error);
             else {
@@ -68,4 +61,4 @@ class TikaProcess {
     }
 }
 
-module.exports = TikaProcess;
+module.exports = TextProcess;

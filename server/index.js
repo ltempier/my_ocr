@@ -14,6 +14,7 @@ var express = require('express'),
 var File = require('./components/File'),
     TesseractProcess = require('./components/TesseractProcess'),
     TikaProcess = require('./components/TikaProcess'),
+    TextProcess = require('./components/TextProcess'),
     security = require('./components/security'),
     client = new elasticsearch.Client(config.elasticsearch);
 
@@ -69,35 +70,40 @@ api.route('/files')
             async.forEach(files, function (f, next) {
                 var file = new File(f.path, {
                     fileName: f.originalFilename
-                }), ocr = null;
+                });
 
-                if (file.tikaSupport())
-                    ocr = new TikaProcess(file);
-                else if (file.tesseractSupport())
-                    ocr = new TesseractProcess(file);
-                else
-                    return next();
-
-                ocr.process(function (err, body) {
+                file.check(function (err) {
                     if (err)
-                        console.error(err);
+                        return next();
 
-                    file.save();
-                    body.tags = (req.body.tags || "").split(' ');
-                    body.user = {
-                        id: req.user.id,
-                        login: req.user.login
-                    };
-
-                    client.index({
-                        index: 'files',
-                        type: 'file',
-                        body: body
-                    }, function (err) {
+                    var ocr = null;
+                    if (file.tikaSupport())
+                        ocr = new TikaProcess(file);
+                    else if (file.tesseractSupport())
+                        ocr = new TesseractProcess(file);
+                    else if (file.textSupport())
+                        ocr = new TextProcess(file);
+                    else
+                        return next();
+                    ocr.process(function (err, body) {
                         if (err)
                             console.error(err);
-                        next(); //bypass error
-                    });
+                        file.save();
+                        body.tags = (req.body.tags || "").split(' ');
+                        body.user = {
+                            id: req.user.id,
+                            login: req.user.login
+                        };
+                        client.index({
+                            index: 'files',
+                            type: 'file',
+                            body: body
+                        }, function (err) {
+                            if (err)
+                                console.error(err);
+                            next(); //bypass error
+                        });
+                    })
                 })
             }, function () {
 
@@ -119,26 +125,29 @@ api.route('/parse')
             async.forEach(files, function (f, next) {
                 var file = new File(f.path), result = {
                     fileName: f.originalFilename
-                }, ocr = null;
-
-                if (file.tikaSupport())
-                    ocr = new TikaProcess(file, {
-                        force: true
-                    });
-                else if (file.tesseractSupport())
-                    ocr = new TesseractProcess(file, {
-                        force: true
-                    });
-                else
-                    return next();
-
-                ocr.process(function (err, body) {
+                };
+                file.check(true, function (err) {
                     if (err)
-                        console.error(err);
-                    result.text = body.text;
-                    results.push(result);
-                    file.clear();
-                    next()
+                        return next();
+
+                    var ocr = null;
+                    if (file.tikaSupport())
+                        ocr = new TikaProcess(file);
+                    else if (file.tesseractSupport())
+                        ocr = new TesseractProcess(file);
+                    else if (file.textSupport())
+                        ocr = new TextProcess(file);
+                    else
+                        return next();
+
+                    ocr.process(function (err, body) {
+                        if (err)
+                            console.error(err);
+                        result.text = body.text;
+                        results.push(result);
+                        file.clear();
+                        next()
+                    })
                 })
             }, function () {
                 if (results.length == 1)

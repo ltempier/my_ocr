@@ -18,24 +18,15 @@ class TesseractProcess {
             if (!_.isUndefined(value) && !_.isNull(value))
                 this[key] = value
         });
-
-
-
     }
 
     process(cb) {
-        this.check((err) => {
+        var filePath = this.file.tmpFilePath;
+        this.performImage(filePath, (err) => {
             if (err)
-                cb(err);
-            else {
-                var filePath = this.file.tmpFilePath;
-                this.performImage(filePath, (err) => {
-                    if (err)
-                        this.text(this.file.originalFilePath, end.bind(this));
-                    else
-                        this.text(filePath, end.bind(this))
-                })
-            }
+                this.text(this.file.originalFilePath, end.bind(this));
+            else
+                this.text(filePath, end.bind(this))
         });
 
         function end(err, text) {
@@ -93,23 +84,6 @@ class TesseractProcess {
                 }
             }
         )
-    }
-
-    check(cb) {
-        this.file.exists((exists) => {
-            if (!exists)
-                cb(new Error('Original file not exist'));
-            else if (this.force == true)
-                cb();
-            else
-                this.file.exists(this.file.destFilePath, function (exists) {
-                    if (exists)
-                        cb(new Error('File already process'));
-                    else
-                        cb()
-                })
-
-        })
     }
 }
 

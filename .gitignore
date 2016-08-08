@@ -1,8 +1,10 @@
 .idea
 my_ocr.iml
-tessdata
 node_modules
 example/*
+
+tessdata
+tika-app-*
 
 !tmp
 tmp/*
