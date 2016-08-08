@@ -37,7 +37,7 @@ class TesseractProcess {
 
         function end(err, text) {
             if (err)
-                cb(null, {
+                cb(err, {
                     date: Date.now(),
                     file: this.file.getInfo(),
                     error: true,
@@ -55,6 +55,7 @@ class TesseractProcess {
     parse(filePath, cb) {
         if (this.log)
             console.log('start parse image ' + filePath);
+
         var command = ['tesseract', filePath, 'stdout', '-l', this.language, '-psm 3'].join(' ');
         exec(command, (error, stdout) => {
             if (error)

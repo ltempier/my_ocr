@@ -62,24 +62,25 @@ api.route('/files')
             var files = req.files.file;
             if (!req.files.file.length)
                 files = [files];
-
             res.sendStatus(200);
 
             async.forEach(files, function (f, next) {
                 var file = new File(f.path, {
                     fileName: f.originalFilename
                 });
-                var tesseract = new TesseractProcess(file, {force: true});
+
+                var tesseract = new TesseractProcess(file);
                 tesseract.process(function (err, body) {
                     if (err)
                         console.error(err);
-                    file.save();
 
+                    file.save();
                     body.tags = (req.body.tags || "").split(' ');
                     body.user = {
                         id: req.user.id,
                         login: req.user.login
                     };
+
                     client.index({
                         index: 'files',
                         type: 'file',
@@ -87,7 +88,7 @@ api.route('/files')
                     }, function (err) {
                         if (err)
                             console.error(err);
-                        next()
+                        next(); //bypass error
                     });
                 })
             }, function () {
@@ -98,6 +99,41 @@ api.route('/files')
             res.status(403).json(new Error('no files'))
     });
 
+api.route('/parse')
+    .post(function (req, res) {
+        if (req.files && req.files.file) {
+            var files = req.files.file,
+                results = [];
+
+            if (!req.files.file.length)
+                files = [files];
+
+            async.forEach(files, function (f, next) {
+                var file = new File(f.path),
+                    result = {
+                        fileName: f.originalFilename
+                    };
+                var tesseract = new TesseractProcess(file, {
+                    force: true
+                });
+                tesseract.process(function (err, body) {
+                    if (err)
+                        console.error(err);
+
+                    result.text = body.text;
+                    results.push(result);
+                    file.clear();
+                    next()
+                })
+            }, function () {
+                if (results.length == 1)
+                    results = results[0];
+                res.status(200).json(results)
+            })
+        }
+        else
+            res.status(403).json(new Error('no files'))
+    });
 
 api.route('/files/:hash')
     .get(function (req, res) {

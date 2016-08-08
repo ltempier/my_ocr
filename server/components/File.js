@@ -33,7 +33,15 @@ class File {
         filestream.pipe(res);
     }
 
-    save(cb) {
+    clear() {
+        var paths = [this.originalFilePath, this.destFilePath, this.tmpFilePath];
+        paths.forEach(function (path) {
+            if (fs.existsSync(path))
+                fs.unlinkSync(path)
+        })
+    }
+
+    save() {
         if (cb && typeof cb === "function")
             fs.rename(this.originalFilePath, this.destFilePath, (rnErr) => {
                 fs.unlink(this.tmpFilePath, function (ulErr) {
