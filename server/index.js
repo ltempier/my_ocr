@@ -113,7 +113,7 @@ api.route('/files')
             res.status(403).json(new Error('no files'))
     });
 
-api.route('/parse')
+api.route('/text')
     .post(function (req, res) {
         if (req.files && req.files.file) {
             var files = req.files.file,

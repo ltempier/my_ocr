@@ -45,7 +45,7 @@ curl -i -F token=[my_token] \
 -F file=@[file_path] \
 -F file=@[file_path] \
 -F file=@[file_path] \
-localhost:3000/api/parse
+localhost:3000/api/text
 ```
 
 TODO:
