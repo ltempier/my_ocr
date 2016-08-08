@@ -20,6 +20,7 @@
     "express-session": "^1.14.0",
     "fs-extra": "^0.30.0",
     "jimp": "^0.2.24",
+    "jsonwebtoken": "^7.1.7",
     "lodash": "^4.14.1",
     "method-override": "^2.3.6",
     "mime": "^1.3.4",
