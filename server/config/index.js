@@ -9,8 +9,7 @@ var root = path.normalize(__dirname + '/../..');
 
 var all = {
     root: root,
-    filesDir: 'files',
-    tmpDir: 'tmp',
+    data: path.join(root, 'data'),
     elasticsearch: {},
     secret: 'MY ocr secret 123',
     TESSDATA_PREFIX: root,

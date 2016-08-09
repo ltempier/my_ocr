@@ -24,7 +24,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 app.use(methodOverride());
 app.use(multipart({
-    uploadDir: path.join(config.root, config.tmpDir)
+    uploadDir: path.join(config.data, 'upload')
 }));
 
 app.use(express.static(path.join(config.root, 'client')));
@@ -67,46 +67,56 @@ api.route('/files')
 
             res.sendStatus(200);
 
-            async.forEach(files, function (f, next) {
+            async.eachLimit(files, 3, function (f, next) {
                 var file = new File(f.path, {
                     fileName: f.originalFilename
-                });
+                }), ocr = null;
 
-                file.check(function (err) {
-                    if (err)
-                        return next();
+                async.waterfall([
+                    function (cb) {
+                        file.check(cb)
+                    },
+                    function (cb) {
+                        if (file.tikaSupport())
+                            ocr = new TikaProcess(file);
+                        else if (file.tesseractSupport())
+                            ocr = new TesseractProcess(file);
+                        else if (file.textSupport())
+                            ocr = new TextProcess(file);
+                        cb()
+                    },
 
-                    var ocr = null;
-                    if (file.tikaSupport())
-                        ocr = new TikaProcess(file);
-                    else if (file.tesseractSupport())
-                        ocr = new TesseractProcess(file);
-                    else if (file.textSupport())
-                        ocr = new TextProcess(file);
-                    else
-                        return next();
-                    ocr.process(function (err, body) {
-                        if (err)
-                            console.error(err);
-                        file.save();
+                    function (cb) {
+                        if (ocr)
+                            ocr.process(cb);
+                        else
+                            cb(null, {})
+                    },
+                    function (body, cb) {
+
                         body.tags = (req.body.tags || "").split(' ');
                         body.user = {
                             id: req.user.id,
                             login: req.user.login
                         };
-                        client.index({
-                            index: 'files',
-                            type: 'file',
-                            body: body
-                        }, function (err) {
+
+                        file.save(function (err) {
                             if (err)
-                                console.error(err);
-                            next(); //bypass error
-                        });
-                    })
+                                cb(err);
+                            else
+                                client.index({
+                                    index: 'files',
+                                    type: 'file',
+                                    body: body
+                                }, cb);
+                        })
+                    }
+                ], function (err) {
+                    if (err)
+                        console.log(err)
+                    next(); //bypass error
                 })
             }, function () {
-
             })
         }
         else
@@ -134,7 +144,9 @@ api.route('/text')
                     if (file.tikaSupport())
                         ocr = new TikaProcess(file);
                     else if (file.tesseractSupport())
-                        ocr = new TesseractProcess(file);
+                        ocr = new TesseractProcess(file, {
+                            language: req.body.language
+                        });
                     else if (file.textSupport())
                         ocr = new TextProcess(file);
                     else
@@ -145,8 +157,7 @@ api.route('/text')
                             console.error(err);
                         result.text = body.text;
                         results.push(result);
-                        file.clear();
-                        next()
+                        file.clear(next);
                     })
                 })
             }, function () {

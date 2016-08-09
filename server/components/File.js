@@ -5,6 +5,7 @@ var path = require('path'),
     fs = require('fs-extra'),
     config = require('../config'),
     _ = require('lodash'),
+    async = require('async'),
     crypto = require('crypto');
 
 class File {
@@ -64,33 +65,24 @@ class File {
         filestream.pipe(res);
     }
 
-    clear() {
-        var paths = [this.originalFilePath, this.destFilePath, this.tmpFilePath];
-        paths.forEach(function (path) {
-            if (fs.existsSync(path))
-                fs.unlinkSync(path)
-        })
+    clear(cb) {
+        async.each([this.originalFilePath, this.tmpFilePath], function (path, next) {
+            fs.exists(path, function (exists) {
+                if (exists)
+                    fs.unlink(path, next);
+                else
+                    next()
+            })
+        }, cb)
     }
 
     save(cb) {
-        if (cb && typeof cb === "function")
-            fs.rename(this.originalFilePath, this.destFilePath, (rnErr) => {
-                fs.unlink(this.tmpFilePath, function (ulErr) {
-                    if (rnErr || ulErr)
-                        cb([rnErr, ulErr]);
-                    else
-                        cb()
-                })
-            });
-        else {
-            try {
-                fs.renameSync(this.originalFilePath, this.destFilePath);
-                fs.unlinkSync(this.tmpFilePath)
-            }
-            catch (e) {
-                console.error(e)
-            }
-        }
+        fs.copy(this.originalFilePath, this.destFilePath, (err) => {
+            if (err)
+                cb(err);
+            else
+                this.clear(cb)
+        })
     }
 
     moveToTmp(cb) {
@@ -142,20 +134,20 @@ class File {
     }
 
     static initFileDir() {
-        [config.tmpDir, config.filesDir].forEach(function (dirName) {
-            var dirPath = path.join(config.root, dirName);
+        ['tmp', 'files', 'upload'].forEach(function (dirName) {
+            var dirPath = path.join(config.data, dirName);
             if (!fs.existsSync(dirPath)) {
-                fs.mkdirSync(dirPath);
+                fs.mkdirsSync(dirPath);
             }
         })
     }
 
     static getTmpPath(fileName) {
-        return path.join(config.root, config.tmpDir, fileName) + '.jpg';
+        return path.join(config.data, 'tmp', fileName) + '.jpg';
     }
 
     static getFilePath(fileName) {
-        return path.join(config.root, config.filesDir, fileName);
+        return path.join(config.data, 'files', fileName);
     }
 
     static getUrl(hash) {
