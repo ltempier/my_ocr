@@ -226,6 +226,6 @@ app.use('/api', api);
 
 
 var server = require('http').createServer(app);
-server.listen(3000, "0.0.0.0", function () {
+server.listen(config.port, config.ip, function () {
     console.log('Express server listening')
 });
