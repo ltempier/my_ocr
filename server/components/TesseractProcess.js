@@ -35,12 +35,14 @@ class TesseractProcess {
                     date: Date.now(),
                     file: this.file.getInfo(),
                     error: true,
+                    process: true,
                     text: ""
                 });
             else
                 cb(null, {
                     date: Date.now(),
                     file: this.file.getInfo(),
+                    process: true,
                     text: text
                 })
         }

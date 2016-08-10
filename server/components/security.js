@@ -2,11 +2,16 @@
 
 var config = require('../config'),
     crypto = require('crypto'),
+    _ = require('lodash'),
     jwt = require('jsonwebtoken');
 
 class Security {
     constructor() {
+        this.users = []
+    }
 
+    setUsers(users) {
+        this.users = users
     }
 
     createToken(user) {
@@ -18,17 +23,25 @@ class Security {
         if (req.url == "/auth")
             next();
         else if (token) {
-            jwt.verify(token, config.secret, function (err, user) {
+            jwt.verify(token, config.secret, (err, user) => {
                 if (err)
                     return res.status(401).json({success: false, message: 'Failed to authenticate token.'});
                 else {
-                    req.user = user;
-                    next();
+                    var isKnow = this.users.find(function (u) {
+                        var keys = ['id', 'login', 'pwd'];
+                        return _.isEqual(_.pick(u, keys), _.pick(user, keys))
+                    });
+
+                    if (isKnow) {
+                        req.user = user;
+                        next();
+                    } else
+                        res.status(401).json({success: false, message: 'Failed to authenticate token.'});
                 }
             });
         }
         else
-            return res.status(403).send({
+            return res.status(401).send({
                 success: false,
                 message: 'No token provided. Go to /auth'
             });

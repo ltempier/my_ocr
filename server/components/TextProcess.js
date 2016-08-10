@@ -24,12 +24,14 @@ class TextProcess {
             if (err)
                 cb(err, {
                     date: Date.now(),
+                    process: true,
                     file: this.file.getInfo(),
                     error: true,
                     text: ""
                 });
             else
                 cb(null, {
+                    process: true,
                     date: Date.now(),
                     file: this.file.getInfo(),
                     text: text

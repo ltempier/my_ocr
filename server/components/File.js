@@ -77,12 +77,18 @@ class File {
     }
 
     save(cb) {
-        fs.copy(this.originalFilePath, this.destFilePath, (err) => {
-            if (err)
-                cb(err);
-            else
-                this.clear(cb)
-        })
+        fs.copy(this.originalFilePath, this.destFilePath, cb)
+    }
+
+    remove(cb) {
+        async.each([this.originalFilePath, this.tmpFilePath, this.destFilePath], function (path, next) {
+            fs.exists(path, function (exists) {
+                if (exists)
+                    fs.unlink(path, next);
+                else
+                    next()
+            })
+        }, cb)
     }
 
     moveToTmp(cb) {

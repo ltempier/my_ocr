@@ -15,7 +15,7 @@ $(document).ready(function () {
 function showApp() {
     $('#section-auth').hide();
     $('#section-app').show();
-    search('');
+    search('', true);
 }
 
 function showAuth() {
@@ -42,16 +42,15 @@ function auth(e) {
         },
         error: function (err) {
             console.log(err);
-            if (err.status != 500)
-                showAuth()
+            if (err.status == 401)
+                showAuth(oldQuery, true)
         }
     })
 }
 
-
-function search(value) {
+function search(value, force) {
     var query = value.split(' ').join('+');
-    if (oldQuery && oldQuery == query)
+    if (!force && oldQuery && oldQuery == query)
         return;
 
     $.ajax({
@@ -69,6 +68,7 @@ function search(value) {
                     ' <div class="col-md-12">',
                     '<div class="panel panel-default">',
                     '<div class="panel-body">',
+                    '<button type="button" class="close">&times;</button>',
                     '<div class="media">',
                     '<div class="media-left">',
                     '<img class="media-object" src="">',
@@ -83,20 +83,41 @@ function search(value) {
                     '</div>',
                     '</div>'
                 ].join(''));
+                result.text = result.text || "";
                 $template.find('img').attr('src', result.file.url + '?token=' + window.localStorage.token);
                 $template.find('p').text(result.text.substring(0, 1500) + (result.text.length > 1500 ? ' ...' : ''));
                 $template.find('a').attr('href', result.file.url + '?token=' + window.localStorage.token);
                 $template.find('a').text(result.file.fileName);
                 $results.append($template)
-            })
+            });
         },
         error: function (err) {
             console.log(err);
-            if (err.status != 500)
+            if (err.status == 401)
                 showAuth()
         }
     });
 }
+
+
+function remove(url) {
+    $.ajax({
+        url: url,
+        type: 'DELETE',
+        data: {
+            token: token
+        },
+        success: function () {
+            search(oldQuery, true)
+        },
+        error: function (err) {
+            console.log(err);
+            if (err.status == 401)
+                showAuth()
+        }
+    })
+}
+
 
 function upload(e) {
     e.preventDefault();
@@ -124,7 +145,7 @@ function upload(e) {
         },
         error: function (err) {
             console.log(err);
-            if (err.status != 500)
+            if (err.status == 401)
                 showAuth()
         }
     });
