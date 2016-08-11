@@ -7,7 +7,9 @@ var config = require('../config'),
 
 class Security {
     constructor() {
-        this.users = []
+        this.users = [];
+        this.keys = ['id', 'login', 'pwd']
+
     }
 
     setUsers(users) {
@@ -15,7 +17,19 @@ class Security {
     }
 
     createToken(user) {
-        return jwt.sign(user, config.secret, {expiresIn: "24h"});
+        return jwt.sign(user, config.secret);
+    }
+
+    exists(user, keys) {
+        keys = keys || this.keys;
+        return this.users.find(function (knowUser) {
+            var exist = true;
+            keys.forEach(function (key) {
+                if (knowUser[key].toLowerCase() != user[key].toLowerCase())
+                    exist = false
+            });
+            return exist
+        });
     }
 
     middleware(req, res, next) {
@@ -27,12 +41,7 @@ class Security {
                 if (err)
                     return res.status(401).json({success: false, message: 'Failed to authenticate token.'});
                 else {
-                    var isKnow = this.users.find(function (u) {
-                        var keys = ['id', 'login', 'pwd'];
-                        return _.isEqual(_.pick(u, keys), _.pick(user, keys))
-                    });
-
-                    if (isKnow) {
+                    if (this.exists(user)) {
                         req.user = user;
                         next();
                     } else

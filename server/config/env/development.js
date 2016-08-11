@@ -5,5 +5,6 @@ module.exports = {
     elasticsearch: {
         host: 'localhost:9200',
         log: 'trace'
-    }
+    },
+    ip: "0.0.0.0"
 };

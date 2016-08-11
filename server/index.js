@@ -35,13 +35,10 @@ try {
         throw new Error('access.json exist but is not configure');
     else {
         security.setUsers(users);
-
         app.post('/auth', function (req, res) {
-            var access = users.find(function (a) {
-                return a.login == req.body.login && a.pwd == req.body.pwd
-            });
-            if (access) {
-                var token = security.createToken(access);
+            var user = security.exists(req.body, ['login', 'pwd']);
+            if (user) {
+                var token = security.createToken(user);
                 res.set('x-access-token', token);
                 return res.status(200).send({
                     success: true,
@@ -74,8 +71,8 @@ api.route('/files')
                 })
             });
 
-            async.auto({
-                save: function (callback) {
+            async.series([
+                function (callback) {
                     async.eachOf(files, function (file, index, next) {
                         file.check(function (err) { //TODO check in elasticsearch too
                             if (err) {
@@ -87,7 +84,7 @@ api.route('/files')
                         })
                     }, callback)
                 },
-                documents: ['save', function (results, callback) {
+                function (callback) {
                     async.each(files, function (file, next) {
                         client.index({
                             index: 'files',
@@ -96,16 +93,17 @@ api.route('/files')
                                 file: file.getInfo()
                             }
                         }, function (err, document) {
-                            file.document = document;
-                            next(err)
+                            if (!err)
+                                file.document = document;
+                            next()
                         });
                     }, callback)
-                }],
-                res: ['save', 'documents', function (results, cb) {
+                }
+            ], function (err) {
+                if (err)
+                    res.status(403).json(err);
+                else {
                     res.sendStatus(200);
-                    cb()
-                }],
-                process: ['documents', function (results, callback) {
                     async.eachLimit(files, 3, function (file, next) {
                         var ocr = null,
                             document = file.document,
@@ -125,7 +123,7 @@ api.route('/files')
                             function (cb) {
                                 if (ocr)
                                     ocr.process(function (err, result) {
-                                        if (!err)
+                                        if (!err && result)
                                             body = result;
                                         cb()
                                     });
@@ -149,13 +147,12 @@ api.route('/files')
                                             doc_as_upsert: true
                                         }
                                     }, cb);
-                                } else {
+                                } else
                                     client.index({
                                         index: 'files',
                                         type: 'file',
                                         body: body
                                     }, cb);
-                                }
                             },
                             function (cb) {
                                 file.clear(cb)
@@ -165,12 +162,12 @@ api.route('/files')
                                 console.log(err);
                             next(); //bypass process error
                         })
-                    }, callback)
-                }]
-            }, function (err) {
-                if (err)
-                    console.log(err)
-            });
+                    }, function (err) {
+                        if (err)
+                            console.log(err)
+                    })
+                }
+            })
         }
         else
             res.status(403).json(new Error('no files'))
@@ -182,10 +179,8 @@ api.route('/text')
             var f = req.files.file,
                 result = {};
 
-            if (f.length) {
-                f = f[0];
-                result.warning = "only one file is processed"
-            }
+            if (f.length)
+                return res.status(403).json(new Error("Can't process multiple files"));
 
             result.fileName = f.originalFilename;
             var file = new File(f.path);
@@ -259,24 +254,29 @@ api.route('/files/:hash')
                         "file.hash": req.params.hash
                     }
                 },
-                "from": 0,
-                "size": 1
+                "from": 0
             }
         }).then(function (resp) {
             if (resp.hits.hits.length) {
                 async.each(resp.hits.hits, function (hit, next) {
                     client.delete({
-                        index: 'myindex',
-                        type: 'mytype',
-                        id: '1'
-                    }, function (error, response) {
-                        file.remove(function (err) {
-
-
-                        })
+                        index: hit._index,
+                        type: hit._type,
+                        id: hit._id
+                    }, function (err) {
+                        if (err)
+                            next(err);
+                        else {
+                            var option = hit._source.file;
+                            var file = new File(File.getFilePath(option.hash), option);
+                            file.remove(next)
+                        }
                     });
-                }, function () {
-                    res.sendStatus(200)
+                }, function (err) {
+                    if (err)
+                        res.status(500).json(err);
+                    else
+                        res.sendStatus(200)
                 });
             } else
                 res.sendStatus(404)

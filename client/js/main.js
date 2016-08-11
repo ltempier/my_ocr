@@ -1,10 +1,9 @@
 'use strict';
 
-var oldQuery = null,
-    token = window.localStorage.token;
+var oldQuery = null;
 
 $(document).ready(function () {
-    if (token)
+    if (window.localStorage.token)
         showApp();
     else
         showAuth();
@@ -49,7 +48,7 @@ function auth(e) {
 }
 
 function search(value, force) {
-    var query = value.split(' ').join('+');
+    var query = (value || "").split(' ').join('+');
     if (!force && oldQuery && oldQuery == query)
         return;
 
@@ -69,25 +68,32 @@ function search(value, force) {
                     '<div class="panel panel-default">',
                     '<div class="panel-body">',
                     '<button type="button" class="close">&times;</button>',
-                    '<div class="media">',
-                    '<div class="media-left">',
-                    '<img class="media-object" src="">',
+
+                    '<div class="row">',
+                    '<div class="col-lg-3 col-md-6 col-xs-12" >',
+                    '<img src="">',
                     '</div>',
-                    '<div class="media-body">',
+                    '<div class="col-lg-9 col-md-6 col-xs-12">',
                     '<p ></p>',
                     '<a href="" target="_blank">',
-                    '</a>',
                     '</div>',
                     '</div>',
+
                     '</div>',
                     '</div>',
                     '</div>'
                 ].join(''));
+
                 result.text = result.text || "";
+                result.file = result.file || {};
+
                 $template.find('img').attr('src', result.file.url + '?token=' + window.localStorage.token);
                 $template.find('p').text(result.text.substring(0, 1500) + (result.text.length > 1500 ? ' ...' : ''));
                 $template.find('a').attr('href', result.file.url + '?token=' + window.localStorage.token);
                 $template.find('a').text(result.file.fileName);
+                $template.find('.close').on("click", function () {
+                    remove(result.file.url)
+                });
                 $results.append($template)
             });
         },
@@ -105,7 +111,7 @@ function remove(url) {
         url: url,
         type: 'DELETE',
         data: {
-            token: token
+            token: window.localStorage.token
         },
         success: function () {
             search(oldQuery, true)
@@ -126,11 +132,11 @@ function upload(e) {
         $input = $form.find('input[name=token]');
 
     if ($input && $input.length)
-        $input.attr('value', token);
+        $input.attr('value', window.localStorage.token);
     else
         $('<input type="text" name="token">')
             .attr('type', 'hidden')
-            .attr('value', token)
+            .attr('value', window.localStorage.token)
             .appendTo($form);
 
     $.ajax({

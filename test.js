@@ -23,22 +23,30 @@ try {
 catch (e) {
 }
 finally {
-    var fileName = 'test.pdf';
+    var fileName = '2.jpg';
     fs.copySync(exDir + "/" + fileName, testDir + "/" + fileName);
-    var f = new File(testDir + "/" + fileName);
+    var file = new File(testDir + "/" + fileName);
 
+    var ocr = null;
+    if (file.tikaSupport())
+        ocr = new TikaProcess(file);
+    else if (file.tesseractSupport())
+        ocr = new TesseractProcess(file);
+    else if (file.textSupport())
+        ocr = new TextProcess(file);
 
-    console.log('tesseract ' + f.tesseractSupport())
-    console.log('tike ' + f.tikaSupport())
+    ocr.log = true
 
-    var p = new TikaProcess(f, {
-        force: true
-    });
+    if (ocr)
+        ocr.process(function (err, res) {
+            console.log('res:', res.text);
+            exit(err)
+        });
 
-    p.process(function (err, res) {
-        console.log('res:', res.text);
-        exit(err)
-    });
+    setInterval(function () {
+        console.log('yo')
+    }, 1000)
+
 }
 
 

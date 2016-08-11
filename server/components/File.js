@@ -66,7 +66,7 @@ class File {
     }
 
     clear(cb) {
-        async.each([this.originalFilePath, this.tmpFilePath], function (path, next) {
+        async.eachSeries([this.originalFilePath, this.tmpFilePath], function (path, next) {
             fs.exists(path, function (exists) {
                 if (exists)
                     fs.unlink(path, next);
@@ -81,7 +81,7 @@ class File {
     }
 
     remove(cb) {
-        async.each([this.originalFilePath, this.tmpFilePath, this.destFilePath], function (path, next) {
+        async.eachSeries([this.originalFilePath, this.tmpFilePath, this.destFilePath], function (path, next) {
             fs.exists(path, function (exists) {
                 if (exists)
                     fs.unlink(path, next);
