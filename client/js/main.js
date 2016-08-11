@@ -1,6 +1,7 @@
 'use strict';
 
-var oldQuery = null;
+var oldQuery = null,
+    refreshDelay = 1000;
 
 $(document).ready(function () {
     if (window.localStorage.token)
@@ -114,7 +115,9 @@ function remove(url) {
             token: window.localStorage.token
         },
         success: function () {
-            search(oldQuery, true)
+            setTimeout(function () {
+                search(oldQuery, true);
+            }, refreshDelay)
         },
         error: function (err) {
             console.log(err);
@@ -147,7 +150,10 @@ function upload(e) {
         processData: false,
         contentType: false,
         success: function () {
-            closeModal();
+            setTimeout(function () {
+                closeModal();
+                search(oldQuery, true);
+            }, refreshDelay)
         },
         error: function (err) {
             console.log(err);

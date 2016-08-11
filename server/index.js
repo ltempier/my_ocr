@@ -292,6 +292,7 @@ api.route('/search')
         }, q = (req.query['q'] || "").split(' ').filter(function (value) {
             return value.length
         });
+
         if (q.length)
             query = {
                 "bool": {
@@ -300,10 +301,14 @@ api.route('/search')
                     })
                 }
             };
+
         client.search({
             index: 'files',
             body: {
                 "query": query,
+                "sort": [
+                    {"date": "desc"}
+                ],
                 "from": 0,
                 "size": 50
             }

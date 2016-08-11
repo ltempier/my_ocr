@@ -35,18 +35,13 @@ finally {
     else if (file.textSupport())
         ocr = new TextProcess(file);
 
-    ocr.log = true
+    ocr.log = true;
 
     if (ocr)
         ocr.process(function (err, res) {
             console.log('res:', res.text);
             exit(err)
         });
-
-    setInterval(function () {
-        console.log('yo')
-    }, 1000)
-
 }
 
 
