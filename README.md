@@ -52,3 +52,4 @@ TODO:
 - dockerfile
 - perform ui
 - perform search nGram
+- add exif (http://www.exif.org/)
