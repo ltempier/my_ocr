@@ -10,3 +10,5 @@ tika-app-*
 tmp/*
 !files
 files/*
+
+yarn.lock

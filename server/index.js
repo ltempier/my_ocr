@@ -36,7 +36,11 @@ try {
     else {
         security.setUsers(users);
         app.post('/auth', function (req, res) {
-            var user = security.exists(req.body, ['login', 'pwd']);
+            var user = security.exists({
+                login: req.body.login || req.body.user,
+                pwd: req.body.pwd || req.body.password
+            });
+
             if (user) {
                 var token = security.createToken(user);
                 res.set('x-access-token', token);
@@ -287,40 +291,40 @@ api.route('/files/:hash')
 
 api.route('/search')
     .get(function (req, res) {
-        var query = {
-            "match_all": {}
-        }, q = (req.query['q'] || "").split(' ').filter(function (value) {
-            return value.length
-        });
+            var query = {
+                "match_all": {}
+            }, q = (req.query['q'] || "").split(' ').filter(function (value) {
+                return value.length
+            });
 
-        if (q.length)
-            query = {
-                "bool": {
-                    "must": q.map(function (value, index) {
-                        return {"fuzzy": {"text": {"value": value, "max_expansions": 10 + index * 2}}}
-                    })
+            if (q.length)
+                query = {
+                    "bool": {
+                        "must": q.map(function (value, index) {
+                            return {"fuzzy": {"text": {"value": value, "max_expansions": 10 + index * 2}}}
+                        })
+                    }
+                };
+
+            client.search({
+                index: 'files',
+                body: {
+                    "query": query,
+                    "sort": [
+                        {"date": "desc"}
+                    ],
+                    "from": 0,
+                    "size": 50
                 }
-            };
-
-        client.search({
-            index: 'files',
-            body: {
-                "query": query,
-                "sort": [
-                    {"date": "desc"}
-                ],
-                "from": 0,
-                "size": 50
-            }
-        }).then(function (resp) {
-            res.status(200).json(resp.hits.hits.map(function (h) {
-                return h._source
-            }))
-        }, function (err) {
-            res.status(500).json(err.message);
-        });
-    }
-);
+            }).then(function (resp) {
+                res.status(200).json(resp.hits.hits.map(function (h) {
+                    return h._source
+                }))
+            }, function (err) {
+                res.status(500).json(err.message);
+            });
+        }
+    );
 
 
 app.use('/api', api);

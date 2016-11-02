@@ -8,8 +8,6 @@ var config = require('../config'),
 class Security {
     constructor() {
         this.users = [];
-        this.keys = ['id', 'login', 'pwd']
-
     }
 
     setUsers(users) {
@@ -20,16 +18,12 @@ class Security {
         return jwt.sign(user, config.secret);
     }
 
-    exists(user, keys) {
-        keys = keys || this.keys;
-        return this.users.find(function (knowUser) {
-            var exist = true;
-            keys.forEach(function (key) {
-                if (knowUser[key].toLowerCase() != user[key].toLowerCase())
-                    exist = false
+    exists(user) {
+        if (user.login && user.pwd)
+            return this.users.some(function (knowUser) {
+                return knowUser.login.toLowerCase() == user.login.toLowerCase() && knowUser.pwd == user.pwd
             });
-            return exist
-        });
+        return false
     }
 
     middleware(req, res, next) {
