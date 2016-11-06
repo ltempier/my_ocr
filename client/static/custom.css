@@ -8,10 +8,6 @@ img {
     border-bottom: none;
 }
 
-section {
-    display: none;
-}
-
 .btn-file {
     position: relative;
     overflow: hidden;

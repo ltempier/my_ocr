@@ -1,17 +1,18 @@
 'use strict';
 
 import React, {Component} from 'react';
-import request  from 'superagent';
 import {connect} from 'react-redux'
+
 import {searchItems} from '../actions/items'
 
 import Login from './Login'
+import SearchBar from './SearchBar'
+import ListItem from './ListItem'
 
 class App extends Component {
 
     constructor(props) {
         super(props);
-        this.setToken = this.setToken.bind(this);
         this.handleSearchChange = this.handleSearchChange.bind(this)
     }
 
@@ -20,35 +21,27 @@ class App extends Component {
         dispatch(searchItems(e.target.value))
     }
 
-    setToken(token) {
-        console.log(token);
-        this.setState({
-            token: token
-        })
-    }
-
     render() {
+        if (this.props.token)
+            return (
+                <section className="container">
+                    <SearchBar></SearchBar>
+                    <ListItem></ListItem>
+                </section>
+            );
+        else
+            return (
+                <section className="container">
+                    <Login></Login>
+                </section>
+            );
 
-        console.log(this.props)
-
-        var render;
-        render = (
-            <div>
-                <input type="text" onChange={this.handleSearchChange}/>
-                <p>{this.props.isLoading}</p>
-            </div>
-        )
-        //} else
-        //    render = <Login onSuccess={this.setToken}></Login>;
-
-        return <section>{render}</section>
     }
 }
 
 export default connect((state) => {
     return {
-        data: state.items,
-        //isLoading: state.isLoading
+        token: state.login.token
     }
 })(App)
 

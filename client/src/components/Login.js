@@ -1,16 +1,18 @@
 'use strict';
 
 import React, {Component} from 'react';
-import request  from 'superagent';
 
-export default class Login extends Component {
+import {connect} from 'react-redux'
+import {login} from '../actions/login'
+
+class Login extends Component {
 
     constructor(props) {
         super(props);
+
         this.state = {
-            loading: false,
-            login: "",
-            password: "",
+            login: "admin",
+            password: "password",
             messageErrorText: null,
             loginErrorText: null,
             passwordErrorText: null
@@ -50,23 +52,10 @@ export default class Login extends Component {
             this.setState({passwordErrorText: "This field is required"});
         }
         if (valid) {
-            this.setState({loading: true});
-            request
-                .post('/auth')
-                .send({
-                    login: this.state.login,
-                    password: this.state.password
-                })
-                .set('Accept', 'application/json')
-                .end((err, res)=> {
-                    this.setState({loading: false});
-                    if (err) {
-                        if (res && res.body && res.body.message)
-                            this.setState({messageErrorText: res.body.message});
-                    } else
-                        this.props.onSuccess(res.body.token)
-                });
+            const {dispatch} = this.props;
+            dispatch(login(this.state.login, this.state.password))
         }
+
     }
 
     render() {
@@ -74,19 +63,23 @@ export default class Login extends Component {
             <form onSubmit={this.handleSubmit} className="form-horizontal">
                 <div className="form-group">
                     <label className="col-lg-2 control-label">Login</label>
-
                     <div className="col-lg-10">
                         <input type="text" className="form-control" name="login" value={this.state.login}
                                onChange={this.handleLoginChange}/>
                     </div>
+                    <p>
+                        {this.state.loginErrorText}
+                    </p>
                 </div>
                 <div className="form-group">
                     <label className="col-lg-2 control-label">Password</label>
-
                     <div className="col-lg-10">
                         <input type="password" className="form-control" name="pwd" value={this.state.password}
                                onChange={this.handlePasswordChange}/>
                     </div>
+                    <p>
+                        {this.state.passwordErrorText}
+                    </p>
                 </div>
                 <p>
                     {this.state.messageErrorText}
@@ -101,11 +94,7 @@ export default class Login extends Component {
     }
 }
 
-Login.defaultProps = {
-    onSuccess: function (token) {
-        console.log('token', token)
-    }
-};
-
-
+export default connect((state) => {
+    return state.items
+})(Login)
 

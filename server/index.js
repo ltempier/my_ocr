@@ -9,6 +9,7 @@ var express = require('express'),
     async = require('async'),
     elasticsearch = require('elasticsearch'),
     app = express(),
+    morgan = require('morgan'),
     api = express.Router();
 
 var File = require('./components/File'),
@@ -20,6 +21,7 @@ var File = require('./components/File'),
 
 File.initFileDir();
 
+app.use(morgan('short'));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 app.use(methodOverride());

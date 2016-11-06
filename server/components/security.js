@@ -20,14 +20,14 @@ class Security {
 
     exists(user) {
         if (user.login && user.pwd)
-            return this.users.some(function (knowUser) {
+            return this.users.find(function (knowUser) {
                 return knowUser.login.toLowerCase() == user.login.toLowerCase() && knowUser.pwd == user.pwd
             });
         return false
     }
 
     middleware(req, res, next) {
-        var token = (req.body.token || req.query.token || req.headers['x-access-token']).toString();
+        var token = (req.body.token || req.query.token || req.headers['x-access-token'] || '').toString();
         if (req.url == "/auth")
             next();
         else if (token) {
