@@ -14,7 +14,6 @@ export function searchItems(query) {
             .get(url)
             .set('x-access-token', token)
             .end(function (err, res) {
-
                 if (err)
                     dispatch({type: types.SEARCH_ITEMS_ERROR, error: err.message});
                 else
@@ -25,9 +24,6 @@ export function searchItems(query) {
 
 
 export function upload(obj) {
-
-
-    console.log(obj);
 
     return (dispatch, getState) => {
         const token = getState().login.token;
