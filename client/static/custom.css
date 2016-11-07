@@ -28,3 +28,10 @@ img {
     cursor: inherit;
     display: block;
 }
+
+.upload-container {
+    padding: 15px;
+    padding-top: 30px;
+    border: 1px solid #cccccc;
+    border-top: none;
+}

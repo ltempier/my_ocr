@@ -2,22 +2,67 @@
 
 import React, {Component} from 'react';
 import {connect} from 'react-redux'
-import {searchItems} from '../actions/items'
+import {searchItems, upload} from '../actions/items'
 
 
 class SearchBar extends Component {
 
     constructor(props) {
         super(props);
-        this.handleSearchChange = this.handleSearchChange.bind(this);
 
-        const {dispatch} = this.props;
-        dispatch(searchItems(""))
+        this.state = {
+            open: false,
+            files: [],
+            tags: []
+        };
+
+        this.handleSearchChange = this.handleSearchChange.bind(this);
+        this.handleFileChange = this.handleFileChange.bind(this);
+        this.handleTagChange = this.handleTagChange.bind(this);
+
+        this.showUploadMenu = this.showUploadMenu.bind(this);
+        this.submitUpload = this.submitUpload.bind(this);
+
+        this.props.dispatch(searchItems(""))
     }
 
     handleSearchChange(e) {
-        const {dispatch} = this.props;
-        dispatch(searchItems(e.target.value))
+        this.props.dispatch(searchItems(e.target.value))
+    }
+
+    showUploadMenu() {
+        this.setState({
+            open: !this.state.open
+        })
+    }
+
+    submitUpload(e) {
+        e.preventDefault();
+        this.props.dispatch(upload({
+            files: this.state.files,
+            tags: this.state.tags
+        }))
+    }
+
+    handleFileChange(e) {
+        e.preventDefault();
+        var stateFiles = [],
+            files = (e.dataTransfer ? e.dataTransfer.files : e.target.files);
+
+        for (let i = 0; i < files.length || 0; i++) {
+            const file = files[i];
+            file.preview = window.URL.createObjectURL(file);
+            stateFiles.push(file)
+        }
+
+        this.setState({
+            files: stateFiles
+        })
+    }
+
+    handleTagChange(e) {
+        e.preventDefault();
+
     }
 
     render() {
@@ -27,33 +72,43 @@ class SearchBar extends Component {
                     <div className="input-group">
                         <input type="text" className="form-control" placeholder="Search"
                                onChange={this.handleSearchChange}/>
+                        <span className="input-group-btn">
+                                <button className="btn btn-default" type="button" onClick={this.showUploadMenu}>
+                                    {this.state.open ? 'Close' : 'Upload'}
+                                </button>
+                        </span>
+                    </div>
 
-                    <span className="input-group-btn">
-                            <button className="btn btn-default" type="button">Upload</button>
-                    </span>
+                    <div className="upload-container" style={{'display':this.state.open ? 'block' : 'none'}}>
+                        <form className="form-horizontal" onSubmit={this.submitUpload}>
+                            <div className="form-group">
+                                <label className="col-lg-1 control-label">Files</label>
+                                <div className="col-lg-11">
+                                    <span className="btn btn-success btn-file">
+                                        Select files
+                                        <input type="file" accept="image/*|application/*" multiple name="file"
+                                               onChange={this.handleFileChange}/>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="col-lg-1 control-label">Tags</label>
+
+                                <div className="col-lg-11">
+                                    <input type="text" className="form-control" placeholder="tags"
+                                           onChange={this.handleTagChange}/>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <div className="col-lg-12">
+                                    <button type="submit" className="btn btn-primary pull-right">Upload</button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
-
-
-                <div className="modal">
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close"
-                                        aria-hidden="true">&times;</button>
-                                <h4 className="modal-title">Modal title</h4>
-                            </div>
-                            <div className="modal-body">
-                                <p>One fine body…</p>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
-                                <button type="button" className="btn btn-primary">Save changes</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         )
     }
