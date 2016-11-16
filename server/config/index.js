@@ -13,7 +13,7 @@ var all = {
     elasticsearch: {},
     secret: 'MY ocr secret 123',
     TESSDATA_PREFIX: root,
-    TIKA_APP_JAR: path.join(root, 'tika-app-1.13.jar'),
+    TIKA_APP_JAR: path.join(root, 'tika-app-1.14.jar'),
     ip: "127.0.0.1",
     port: process.env.PORT || 3000
 };

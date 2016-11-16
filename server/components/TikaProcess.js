@@ -30,7 +30,6 @@ class TikaProcess {
             if (err)
                 cb(err, {
                     process: true,
-                    date: Date.now(),
                     file: this.file.getInfo(),
                     error: true,
                     text: ""
@@ -38,7 +37,6 @@ class TikaProcess {
             else
                 cb(null, {
                     process: true,
-                    date: Date.now(),
                     file: this.file.getInfo(),
                     text: text
                 })

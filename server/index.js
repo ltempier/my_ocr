@@ -7,19 +7,19 @@ var express = require('express'),
     config = require('./config'),
     path = require('path'),
     async = require('async'),
-    elasticsearch = require('elasticsearch'),
     app = express(),
     morgan = require('morgan'),
     api = express.Router();
 
 var File = require('./components/File'),
+    elasticsearch = require('./components/Elasticsearch'),
     TesseractProcess = require('./components/TesseractProcess'),
     TikaProcess = require('./components/TikaProcess'),
     TextProcess = require('./components/TextProcess'),
-    security = require('./components/security'),
-    client = new elasticsearch.Client(config.elasticsearch);
+    security = require('./components/security');
 
 File.initFileDir();
+elasticsearch.init();
 
 app.use(morgan('short'));
 app.use(bodyParser.urlencoded({extended: false}));
@@ -92,13 +92,7 @@ api.route('/files')
                 },
                 function (callback) {
                     async.each(files, function (file, next) {
-                        client.index({
-                            index: 'files',
-                            type: 'file',
-                            body: {
-                                file: file.getInfo()
-                            }
-                        }, function (err, document) {
+                        elasticsearch.indexFile(file, function (err, document) {
                             if (!err)
                                 file.document = document;
                             next()
@@ -116,6 +110,7 @@ api.route('/files')
                             body = {
                                 process: false
                             };
+
                         async.series([
                             function (cb) {
                                 if (file.tikaSupport())
@@ -129,8 +124,9 @@ api.route('/files')
                             function (cb) {
                                 if (ocr)
                                     ocr.process(function (err, result) {
-                                        if (!err && result)
-                                            body = result;
+                                        if (err)
+                                            console.log(err)
+                                        body = result;
                                         cb()
                                     });
                                 else
@@ -144,21 +140,9 @@ api.route('/files')
                                 };
 
                                 if (document && document._id) {
-                                    client.update({
-                                        index: document._index,
-                                        type: document._type,
-                                        id: document._id,
-                                        body: {
-                                            doc: body,
-                                            doc_as_upsert: true
-                                        }
-                                    }, cb);
+                                    elasticsearch.update(document, body, cb)
                                 } else
-                                    client.index({
-                                        index: 'files',
-                                        type: 'file',
-                                        body: body
-                                    }, cb);
+                                    elasticsearch.index(body, cb);
                             },
                             function (cb) {
                                 file.clear(cb)
@@ -166,7 +150,7 @@ api.route('/files')
                         ], function (err) {
                             if (err)
                                 console.log(err);
-                            next(); //bypass process error
+                            next();
                         })
                     }, function (err) {
                         if (err)
@@ -225,74 +209,46 @@ api.route('/text')
 
 api.route('/files/:hash')
     .get(function (req, res) {
-        client.search({
-            index: 'files',
-            body: {
-                "query": {
-                    "match": {
-                        "file.hash": req.params.hash
+        var hash = req.params.hash;
+        if (hash && hash.length) {
+            elasticsearch.searchByHash(hash, function (err, hits) {
+                if (hits.length) {
+                    try {
+                        var option = hits[0]._source.file,
+                            file = new File(File.getFilePath(option.hash), option);
+                        file.download(res);
+                    } catch (err) {
+                        res.status(500).json(err.message);
                     }
-                },
-                "from": 0,
-                "size": 1
-            }
-        }).then(function (resp) {
-            if (resp.hits.hits.length) {
-                try {
-                    var option = resp.hits.hits[0]._source.file,
-                        file = new File(File.getFilePath(option.hash), option);
-                    file.download(res);
-                } catch (err) {
-                    res.status(500).json(err.message);
-                }
-            } else
-                res.sendStatus(404)
-        }, function (err) {
-            res.status(500).json(err.message);
-        });
+                } else
+                    res.sendStatus(404)
+            })
+        } else
+            res.status(500).json(new Error('no hash'));
     })
     .delete(function (req, res) {
-        client.search({
-            index: 'files',
-            body: {
-                "query": {
-                    "match": {
-                        "file.hash": req.params.hash
-                    }
-                },
-                "from": 0
-            }
-        }).then(function (resp) {
-            if (resp.hits.hits.length) {
-                async.each(resp.hits.hits, function (hit, next) {
-                    client.delete({
-                        index: hit._index,
-                        type: hit._type,
-                        id: hit._id
-                    }, function (err) {
+        var hash = req.params.hash;
+        if (hash && hash.length) {
+            elasticsearch.deleteByHash(hash, function (err) {
+                if (err) {
+                    res.status(500).json(err);
+                } else {
+                    var file = new File(File.getFilePath(hash));
+                    file.remove(function (err) {
                         if (err)
-                            next(err);
-                        else {
-                            var option = hit._source.file;
-                            var file = new File(File.getFilePath(option.hash), option);
-                            file.remove(next)
-                        }
-                    });
-                }, function (err) {
-                    if (err)
-                        res.status(500).json(err);
-                    else
-                        res.sendStatus(200)
-                });
-            } else
-                res.sendStatus(404)
-        }, function (err) {
-            res.status(500).json(err.message);
-        });
+                            res.status(500).json(err);
+                        else
+                            res.sendStatus(200)
+                    })
+                }
+            });
+        } else
+            res.status(500).json(new Error('no hash'));
     });
 
 api.route('/search')
     .get(function (req, res) {
+
             var query = {
                 "match_all": {}
             }, q = (req.query['q'] || "").split(' ').filter(function (value) {
@@ -308,23 +264,13 @@ api.route('/search')
                     }
                 };
 
-            client.search({
-                index: 'files',
-                body: {
-                    "query": query,
-                    "sort": [
-                        {"date": "desc"}
-                    ],
-                    "from": 0,
-                    "size": 50
-                }
-            }).then(function (resp) {
-                res.status(200).json(resp.hits.hits.map(function (h) {
-                    return h._source
-                }))
-            }, function (err) {
-                res.status(500).json(err.message);
-            });
+            elasticsearch.searchByQuery(query, function (err, hits) {
+                if (err)
+                    res.status(500).json(err.message);
+                else
+                    res.status(200).json(hits.map(hit => hit._source))
+            })
+
         }
     );
 

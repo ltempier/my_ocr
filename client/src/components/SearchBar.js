@@ -11,7 +11,7 @@ class SearchBar extends Component {
         super(props);
 
         this.state = {
-            open: false,
+            uploadOpen: false,
             files: [],
             tags: []
         };
@@ -32,7 +32,7 @@ class SearchBar extends Component {
 
     showUploadMenu() {
         this.setState({
-            open: !this.state.open
+            uploadOpen: !this.state.uploadOpen
         })
     }
 
@@ -62,7 +62,6 @@ class SearchBar extends Component {
 
     handleTagChange(e) {
         e.preventDefault();
-
     }
 
     render() {
@@ -74,12 +73,12 @@ class SearchBar extends Component {
                                onChange={this.handleSearchChange}/>
                         <span className="input-group-btn">
                                 <button className="btn btn-default" type="button" onClick={this.showUploadMenu}>
-                                    {this.state.open ? 'Close' : 'Upload'}
+                                    {this.state.uploadOpen ? 'Close' : 'Upload'}
                                 </button>
                         </span>
                     </div>
 
-                    <div className="upload-container" style={{'display':this.state.open ? 'block' : 'none'}}>
+                    <div className="upload-container" style={{'display':this.state.uploadOpen ? 'block' : 'none'}}>
                         <form className="form-horizontal" onSubmit={this.submitUpload}>
                             <div className="form-group">
                                 <label className="col-lg-1 control-label">Files</label>
@@ -103,6 +102,7 @@ class SearchBar extends Component {
 
                             <div className="form-group">
                                 <div className="col-lg-12">
+                                    <p>{this.props.uploadError}</p>
                                     <button type="submit" className="btn btn-primary pull-right">Upload</button>
                                 </div>
                             </div>
@@ -115,6 +115,8 @@ class SearchBar extends Component {
 }
 
 export default connect((state) => {
-    return {}
+    return {
+        uploadError: state.items.uploadError
+    }
 })(SearchBar)
 

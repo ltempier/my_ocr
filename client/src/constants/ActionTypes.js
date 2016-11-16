@@ -7,8 +7,11 @@ export const LOGOUT = 'LOGOUT';
 export const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
 export const LOGIN_ERROR = 'LOGIN_ERROR';
 
-
-export const UPLOAD = 'UPLOAD';
+export const UPLOADING = 'UPLOADING';
 export const UPLOAD_ERROR = 'UPLOAD_ERROR';
 export const UPLOAD_SUCCESS = 'UPLOAD_SUCCESS';
+
+export const REMOVING = 'REMOVING';
+export const REMOVE_ERROR = 'REMOVE_ERROR';
+export const REMOVE_SUCCESS = 'REMOVE_SUCCESS ';
 

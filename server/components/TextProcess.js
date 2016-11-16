@@ -23,7 +23,6 @@ class TextProcess {
         function end(err, text) {
             if (err)
                 cb(err, {
-                    date: Date.now(),
                     process: true,
                     file: this.file.getInfo(),
                     error: true,
@@ -32,7 +31,6 @@ class TextProcess {
             else
                 cb(null, {
                     process: true,
-                    date: Date.now(),
                     file: this.file.getInfo(),
                     text: text
                 })

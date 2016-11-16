@@ -4,7 +4,7 @@ module.exports = {
     env: 'development',
     elasticsearch: {
         host: 'localhost:9200',
-        log: 'trace'
+        //log: 'trace'
     },
     ip: "0.0.0.0"
 };

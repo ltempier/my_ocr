@@ -3,11 +3,13 @@
 import * as types from './../constants/ActionTypes'
 import request  from 'superagent';
 
-export function searchItems(query) {
+var oldQuery = "";
 
+export function searchItems(query) {
+    oldQuery = query;
     return (dispatch, getState) => {
-        const token = getState().login.token;
-        const url = `/api/search?q=${query}`;
+        const token = getState().login.token,
+            url = `/api/search?q=${query}`;
 
         dispatch({type: types.SEARCH_ITEMS});
         return request
@@ -22,13 +24,19 @@ export function searchItems(query) {
     }
 }
 
+export function reload(timeout=300) {
+    return (dispatch) => {
+        setTimeout(function () {
+            dispatch(searchItems(oldQuery))
+        }, timeout )
+    }
+}
 
 export function upload(obj) {
-
     return (dispatch, getState) => {
         const token = getState().login.token;
 
-        dispatch({type: types.UPLOAD});
+        dispatch({type: types.UPLOADING});
 
         var formData = new FormData();
         obj.files.forEach(function (file) {
@@ -42,11 +50,33 @@ export function upload(obj) {
             .end(function (err, res) {
                 if (err)
                     dispatch({type: types.UPLOAD_ERROR, error: err.message});
-                else
+                else {
                     dispatch({type: types.UPLOAD_SUCCESS});
+                    dispatch(reload())
+                }
             });
     }
 }
+
+export function remove(url) {
+    return (dispatch, getState) => {
+        const token = getState().login.token;
+
+        dispatch({type: types.REMOVING});
+        return request
+            .delete(url)
+            .set('x-access-token', token)
+            .end(function (err, res) {
+                if (err)
+                    dispatch({type: types.REMOVE_ERROR, error: err.message});
+                else {
+                    dispatch({type: types.REMOVE_SUCCESS});
+                    dispatch(reload())
+                }
+            });
+    }
+}
+
 
 
 

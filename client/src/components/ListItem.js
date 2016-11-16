@@ -2,12 +2,14 @@
 
 import React, {Component} from 'react';
 import {connect} from 'react-redux'
+import {remove} from '../actions/items'
 
 class ListItem extends Component {
 
     constructor(props) {
         super(props);
     }
+
 
     render() {
         var items = this.props.data.map((item, idx) => {
@@ -17,7 +19,8 @@ class ListItem extends Component {
                     <div className="col-lg-12">
                         <div className="panel panel-default">
                             <div className="panel-body">
-                                <button type="button" className="close" aria-hidden="true">&times;</button>
+                                <button type="button" className="close" aria-hidden="true"
+                                        onClick={() => this.props.dispatch(remove(fileUrl))}>&times;</button>
                                 <div className="row">
                                     <div className="col-lg-3 col-md-6 col-xs-12">
                                         <img src={fileUrl}/>

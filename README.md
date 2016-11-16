@@ -26,7 +26,7 @@ tesseract  --tessdata-dir ./tessdata/ ./example/IMG_3336.png stdout -l fra -psm 
 Install tika
 
 ```sh
-wget http://apache.crihan.fr/dist/tika/tika-app-1.13.jar
+wget http://apache.crihan.fr/dist/tika/tika-app-1.14.jar
 ```
 
 Test command line:
