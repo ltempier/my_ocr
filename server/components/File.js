@@ -6,7 +6,11 @@ var path = require('path'),
     config = require('../config'),
     _ = require('lodash'),
     async = require('async'),
-    crypto = require('crypto');
+    crypto = require('crypto'),
+    TesseractProcess = require('./TesseractProcess'),
+    TikaProcess = require('./TikaProcess'),
+    TextProcess = require('./TextProcess');
+
 
 class File {
     constructor(filePath, options) {
@@ -56,6 +60,21 @@ class File {
 
     textSupport() {
         return (/^text\//i).test(this.mime)
+    }
+
+    text(callback) {
+        var ocr = null;
+        if (this.tikaSupport())
+            ocr = new TikaProcess(file);
+        else if (this.tesseractSupport())
+            ocr = new TesseractProcess(file);
+        else if (this.textSupport())
+            ocr = new TextProcess(file);
+
+        if (ocr)
+            ocr.process(callback);
+        else
+            callback()
     }
 
     download(res) {

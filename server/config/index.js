@@ -11,6 +11,7 @@ var all = {
     root: root,
     data: path.join(root, 'data'),
     elasticsearch: {},
+    rabbitmq: {},
     secret: 'MY ocr secret 123',
     TESSDATA_PREFIX: root,
     TIKA_APP_JAR: path.join(root, 'tika-app-1.14.jar'),

@@ -13,13 +13,9 @@ var express = require('express'),
 
 var File = require('./components/File'),
     elasticsearch = require('./components/Elasticsearch'),
-    TesseractProcess = require('./components/TesseractProcess'),
-    TikaProcess = require('./components/TikaProcess'),
-    TextProcess = require('./components/TextProcess'),
     security = require('./components/security');
 
 File.initFileDir();
-elasticsearch.init();
 
 app.use(morgan('short'));
 app.use(bodyParser.urlencoded({extended: false}));
@@ -67,15 +63,18 @@ api.route('/files')
     .post(function (req, res) {
         if (req.files && req.files.file) {
             var files = req.files.file;
-
             if (!files.length)
                 files = [files];
 
             files = files.map(function (f) {
-                return new File(f.path, {
-                    fileName: f.originalFilename
-                })
+                try {
+                    return new File(f.path, {fileName: f.originalFilename})
+                } catch (e) {
+                    return null
+                }
             });
+
+            files = files.filter((file)=>file);
 
             async.series([
                 function (callback) {
@@ -105,40 +104,32 @@ api.route('/files')
                 else {
                     res.sendStatus(200);
                     async.eachLimit(files, 3, function (file, next) {
-                        var ocr = null,
-                            document = file.document,
+
+                        var document = file.document,
                             body = {
-                                process: false
+                                tags: (req.body.tags || "").split(' '),
+                                user: {
+                                    id: req.user.id,
+                                    login: req.user.login
+                                },
+                                process: false,
+                                error: null,
+                                text: null,
+                                file: file.getInfo()
                             };
 
                         async.series([
                             function (cb) {
-                                if (file.tikaSupport())
-                                    ocr = new TikaProcess(file);
-                                else if (file.tesseractSupport())
-                                    ocr = new TesseractProcess(file);
-                                else if (file.textSupport())
-                                    ocr = new TextProcess(file);
-                                cb()
-                            },
-                            function (cb) {
-                                if (ocr)
-                                    ocr.process(function (err, result) {
-                                        if (err)
-                                            console.log(err)
-                                        body = result;
-                                        cb()
-                                    });
-                                else
+                                file.text(function (err, text) {
+                                    body.process = true;
+                                    if (err)
+                                        body.error = err;
+                                    else
+                                        body.text = text;
                                     cb()
+                                })
                             },
                             function (cb) {
-                                body.tags = (req.body.tags || "").split(' ');
-                                body.user = {
-                                    id: req.user.id,
-                                    login: req.user.login
-                                };
-
                                 if (document && document._id) {
                                     elasticsearch.update(document, body, cb)
                                 } else
@@ -146,61 +137,14 @@ api.route('/files')
                             },
                             function (cb) {
                                 file.clear(cb)
-                            }
-                        ], function (err) {
+                            }], function (err) {
                             if (err)
-                                console.log(err);
-                            next();
+                                console.error(err);
+                            next()
                         })
                     }, function (err) {
-                        if (err)
-                            console.log(err)
                     })
                 }
-            })
-        }
-        else
-            res.status(403).json(new Error('no files'))
-    });
-
-api.route('/text')
-    .post(function (req, res) {
-        if (req.files && req.files.file) {
-            var f = req.files.file,
-                result = {};
-
-            if (f.length)
-                return res.status(403).json(new Error("Can't process multiple files"));
-
-            result.fileName = f.originalFilename;
-            var file = new File(f.path);
-
-            file.check(true, function (err) {
-                if (err)
-                    return res.status(403).json(err);
-
-                var ocr = null;
-                if (file.tikaSupport())
-                    ocr = new TikaProcess(file);
-                else if (file.tesseractSupport())
-                    ocr = new TesseractProcess(file, {
-                        language: req.body.language
-                    });
-                else if (file.textSupport())
-                    ocr = new TextProcess(file);
-                else
-                    return res.status(403).json(new Error("File format not support"));
-
-                ocr.process(function (err, body) {
-                    if (err)
-                        console.error(err);
-                    result.text = body.text;
-                    file.clear(function (err) {
-                        if (err)
-                            console.log(err);
-                        res.status(200).json(result)
-                    });
-                })
             })
         }
         else

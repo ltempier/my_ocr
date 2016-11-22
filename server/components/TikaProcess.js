@@ -21,26 +21,10 @@ class TikaProcess {
     process(cb) {
         this.file.moveToTmp((err) => {
             if (err)
-                this.text(this.file.originalFilePath, end.bind(this));
+                this.text(this.file.originalFilePath, cb);
             else
-                this.text(this.file.tmpFilePath, end.bind(this))
+                this.text(this.file.tmpFilePath, cb)
         });
-
-        function end(err, text) {
-            if (err)
-                cb(err, {
-                    process: true,
-                    file: this.file.getInfo(),
-                    error: true,
-                    text: ""
-                });
-            else
-                cb(null, {
-                    process: true,
-                    file: this.file.getInfo(),
-                    text: text
-                })
-        }
     }
 
     text(filePath, cb) {

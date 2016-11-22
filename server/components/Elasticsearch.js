@@ -6,7 +6,8 @@ var elasticsearch = require('elasticsearch'),
 
 class Elasticsearch {
     constructor() {
-        this.client = null
+        this.client = null;
+        this.init()
     }
 
     init() {

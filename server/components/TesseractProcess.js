@@ -24,26 +24,10 @@ class TesseractProcess {
         var filePath = this.file.tmpFilePath;
         this.performImage(filePath, (err) => {
             if (err)
-                this.text(this.file.originalFilePath, end.bind(this));
+                this.text(this.file.originalFilePath, cb);
             else
-                this.text(filePath, end.bind(this))
+                this.text(filePath, cb)
         });
-
-        function end(err, text) {
-            if (err)
-                cb(err, {
-                    file: this.file.getInfo(),
-                    error: true,
-                    process: true,
-                    text: ""
-                });
-            else
-                cb(null, {
-                    file: this.file.getInfo(),
-                    process: true,
-                    text: text
-                })
-        }
     }
 
     text(filePath, cb) {
