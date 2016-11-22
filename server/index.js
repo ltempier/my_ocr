@@ -233,13 +233,18 @@ api.route('/files/:hash')
                 if (err) {
                     res.status(500).json(err);
                 } else {
-                    var file = new File(File.getFilePath(hash));
-                    file.remove(function (err) {
-                        if (err)
-                            res.status(500).json(err);
-                        else
-                            res.sendStatus(200)
-                    })
+                    try {
+                        var file = new File(File.getFilePath(hash));
+                        file.remove(function (err) {
+                            if (err)
+                                res.status(500).json(err);
+                            else
+                                res.sendStatus(200)
+                        })
+                    }
+                    catch (e) {
+                        res.sendStatus(200)
+                    }
                 }
             });
         } else
