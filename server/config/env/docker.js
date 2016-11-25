@@ -7,6 +7,9 @@ module.exports = {
         //log: 'trace'
     },
     rabbitmq: {
-        uri: 'amqp://guest:guest@192.168.99.100:5672'
+        host: '192.168.99.100',
+        port: 5672,
+        login: 'guest',
+        password: 'guest'
     }
 };

@@ -15,7 +15,7 @@ var File = require('./components/File'),
     elasticsearch = require('./components/Elasticsearch'),
     security = require('./components/security');
 
-File.initFileDir();
+File.initFileDir(true);
 
 app.use(morgan('short'));
 app.use(bodyParser.urlencoded({extended: false}));
@@ -74,12 +74,12 @@ api.route('/files')
                 }
             });
 
-            files = files.filter((file)=>file);
+            files = files.filter((file)=>file !== null);
 
             async.series([
                 function (callback) {
                     async.eachOf(files, function (file, index, next) {
-                        file.check(function (err) { //TODO check in elasticsearch too
+                        file.check(true, function (err) { //TODO check in elasticsearch too
                             if (err) {
                                 files.splice(index, 1);
                                 file.clear(next);
@@ -104,7 +104,6 @@ api.route('/files')
                 else {
                     res.sendStatus(200);
                     async.eachLimit(files, 3, function (file, next) {
-
                         var document = file.document,
                             body = {
                                 tags: (req.body.tags || "").split(' '),
@@ -198,13 +197,12 @@ api.route('/files/:hash')
 api.route('/search')
     .get(function (req, res) {
 
-            var query = {
-                "match_all": {}
-            }, q = (req.query['q'] || "").split(' ').filter(function (value) {
-                return value.length
-            });
+            var query = {"match_all": {}},
+                q = (req.query['q'] || "").split(' ').filter(function (value) {
+                    return value.length
+                });
 
-            if (q.length)
+            if (q.length) {
                 query = {
                     "bool": {
                         "must": q.map(function (value, index) {
@@ -212,6 +210,7 @@ api.route('/search')
                         })
                     }
                 };
+            }
 
             elasticsearch.searchByQuery(query, function (err, hits) {
                 if (err)
@@ -229,5 +228,5 @@ app.use('/api', api);
 
 var server = require('http').createServer(app);
 server.listen(config.port, config.ip, function () {
-    console.log('Express server listening')
+    console.log('Express server listening on', [config.ip, config.port].join(':'))
 });

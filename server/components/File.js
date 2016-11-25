@@ -9,8 +9,8 @@ var path = require('path'),
     crypto = require('crypto'),
     TesseractProcess = require('./TesseractProcess'),
     TikaProcess = require('./TikaProcess'),
-    TextProcess = require('./TextProcess');
-
+    TextProcess = require('./TextProcess'),
+    amqp = require('amqp');
 
 class File {
     constructor(filePath, options) {
@@ -20,15 +20,33 @@ class File {
         this.originalFilePath = filePath;
         this.fileName = path.basename(filePath);
         this.mime = mime.lookup(filePath);
+        this.extension = path.extname(this.fileName);
 
         _.each(options, (value, key) => {
             if (!_.isUndefined(value) && !_.isNull(value))
                 this[key] = value
         });
 
-        this.tmpFilePath = File.getTmpPath(this.getHash());
+        this.tmpFilePath = File.getTmpPath(this.getHash(), this.extension);
         this.destFilePath = File.getFilePath(this.getHash());
         this.url = File.getUrl(this.getHash())
+    }
+
+    publish() {
+        this.save((err)=> {
+            if (err)
+                throw err;
+            var connection = amqp.createConnection(config.rabbitmq);
+            connection.on('error', function (e) {
+                console.log("Error from amqp: ", e);
+            });
+            connection.on('ready', () => {
+                connection.publish('process-file', this, {}, function () {
+                    console.log(arguments);
+                    connection.disconnect()
+                });
+            });
+        })
     }
 
     check(force, cb) {
@@ -65,11 +83,11 @@ class File {
     text(callback) {
         var ocr = null;
         if (this.tikaSupport())
-            ocr = new TikaProcess(file);
+            ocr = new TikaProcess(this);
         else if (this.tesseractSupport())
-            ocr = new TesseractProcess(file);
+            ocr = new TesseractProcess(this);
         else if (this.textSupport())
-            ocr = new TextProcess(file);
+            ocr = new TextProcess(this);
 
         if (ocr)
             ocr.process(callback);
@@ -96,12 +114,15 @@ class File {
     }
 
     save(cb) {
-        fs.copy(this.originalFilePath, this.destFilePath, cb)
+        if (!this.exists(this.destFilePath))
+            fs.copy(this.originalFilePath, this.destFilePath, cb);
+        else
+            cb()
     }
 
     remove(cb) {
-        async.eachSeries([this.originalFilePath, this.tmpFilePath, this.destFilePath], function (path, next) {
-            fs.exists(path, function (exists) {
+        async.eachSeries([this.originalFilePath, this.tmpFilePath, this.destFilePath], (path, next) => {
+            this.exists(path, function (exists) {
                 if (exists)
                     fs.unlink(path, next);
                 else
@@ -158,17 +179,21 @@ class File {
         }
     }
 
-    static initFileDir() {
+    static initFileDir(clear) {
         ['tmp', 'files', 'upload'].forEach(function (dirName) {
             var dirPath = path.join(config.data, dirName);
+
+            if (clear === true)
+                fs.removeSync(dirPath);
+
             if (!fs.existsSync(dirPath)) {
                 fs.mkdirsSync(dirPath);
             }
         })
     }
 
-    static getTmpPath(fileName) {
-        return path.join(config.data, 'tmp', fileName) + '.jpg';
+    static getTmpPath(fileName, extension) {
+        return path.join(config.data, 'tmp', fileName + extension || '');
     }
 
     static getFilePath(fileName) {

@@ -54,6 +54,7 @@ class SearchBar extends Component {
             file.preview = window.URL.createObjectURL(file);
             stateFiles.push(file)
         }
+        console.log(stateFiles)
 
         this.setState({
             files: stateFiles
@@ -65,6 +66,7 @@ class SearchBar extends Component {
     }
 
     render() {
+
         return (
             <div>
                 <div className="page-header">
@@ -88,6 +90,14 @@ class SearchBar extends Component {
                                         <input type="file" accept="image/*|application/*" multiple name="file"
                                                onChange={this.handleFileChange}/>
                                     </span>
+                                    {
+                                        this.state.files.map((file, index)=> {
+                                            if ((/^image\//i).test(file.type))
+                                                return <img key={index} className="file-preview" src={file.preview}>
+                                            else
+                                                return <span key={index}  className="label label-default">{file.name}</span>
+                                        })
+                                    }
                                 </div>
                             </div>
 

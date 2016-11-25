@@ -102,4 +102,6 @@ class Elasticsearch {
     }
 }
 
-module.exports = new Elasticsearch();
+var singleton = new Elasticsearch();
+
+module.exports = singleton;

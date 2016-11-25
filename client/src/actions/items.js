@@ -24,11 +24,13 @@ export function searchItems(query) {
     }
 }
 
-export function reload(timeout=300) {
+export function reload(timeout = 1000) {
     return (dispatch) => {
+        dispatch({type: types.SEARCH_ITEMS});
         setTimeout(function () {
+            console.log("refresh");
             dispatch(searchItems(oldQuery))
-        }, timeout )
+        }, timeout)
     }
 }
 

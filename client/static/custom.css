@@ -35,3 +35,8 @@ img {
     border: 1px solid #cccccc;
     border-top: none;
 }
+
+.file-preview{
+    margin-left: 10px;
+    max-height: 40px;
+}
