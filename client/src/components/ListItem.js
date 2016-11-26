@@ -20,7 +20,7 @@ class ListItem extends Component {
                         <div className="panel panel-default">
                             <div className="panel-body">
                                 <button type="button" className="close" aria-hidden="true"
-                                        onClick={() => this.props.dispatch(remove(fileUrl))}>&times;</button>
+                                        onClick={() => this.props.dispatch(remove(item.id))}>&times;</button>
                                 <div className="row">
                                     <div className="col-lg-3 col-md-6 col-xs-12">
                                         <img src={fileUrl}/>

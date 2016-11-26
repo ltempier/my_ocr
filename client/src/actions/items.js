@@ -14,6 +14,8 @@ export function searchItems(query) {
         dispatch({type: types.SEARCH_ITEMS});
         return request
             .get(url)
+            .set('X-Requested-With', 'XMLHttpRequest')
+            .set('Cache-Control', 'no-cache,no-store,must-revalidate,max-age=-1')
             .set('x-access-token', token)
             .end(function (err, res) {
                 if (err)
@@ -60,13 +62,12 @@ export function upload(obj) {
     }
 }
 
-export function remove(url) {
+export function remove(id) {
     return (dispatch, getState) => {
         const token = getState().login.token;
-
         dispatch({type: types.REMOVING});
         return request
-            .delete(url)
+            .delete('/api/items/' + id)
             .set('x-access-token', token)
             .end(function (err, res) {
                 if (err)

@@ -46,6 +46,7 @@
     "redux-thunk": "^2.1.0",
     "style-loader": "^0.13.1",
     "superagent": "^2.2.0",
+    "superagent-no-cache": "^0.1.0",
     "webpack": "^1.13.3"
   },
   "repository": {

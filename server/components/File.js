@@ -14,18 +14,23 @@ var path = require('path'),
 
 class File {
     constructor(filePath, options) {
-        if (!this.exists(filePath))
-            throw new Error("File not exist " + filePath);
+        this.log = false;
+        this.document = null;
 
-        this.originalFilePath = filePath;
-        this.fileName = path.basename(filePath);
-        this.mime = mime.lookup(filePath);
-        this.extension = path.extname(this.fileName);
+        if (!_.isString(filePath) && _.isObject(filePath))
+            options = filePath;
+        else {
+            this.originalFilePath = filePath;
+            this.fileName = path.basename(this.originalFilePath);
+        }
 
         _.each(options, (value, key) => {
             if (!_.isUndefined(value) && !_.isNull(value))
                 this[key] = value
         });
+
+        this.mime = mime.lookup(this.originalFilePath);
+        this.extension = path.extname(this.fileName);
 
         this.tmpFilePath = File.getTmpPath(this.getHash(), this.extension);
         this.destFilePath = File.getFilePath(this.getHash());
@@ -38,11 +43,10 @@ class File {
                 throw err;
             var connection = amqp.createConnection(config.rabbitmq);
             connection.on('error', function (e) {
-                console.log("Error from amqp: ", e);
+                console.error("Error from amqp: ", e);
             });
             connection.on('ready', () => {
                 connection.publish('process-file', this, {}, function () {
-                    console.log(arguments);
                     connection.disconnect()
                 });
             });
@@ -96,10 +100,13 @@ class File {
     }
 
     download(res) {
-        res.setHeader('Content-type', this.mime);
-        res.setHeader('Content-disposition', 'attachment; filename=' + this.fileName);
-        var filestream = fs.createReadStream(this.originalFilePath);
-        filestream.pipe(res);
+        if (this.exists(this.originalFilePath)) {
+            res.setHeader('Content-type', this.mime);
+            res.setHeader('Content-disposition', 'attachment; filename=' + this.fileName);
+            var filestream = fs.createReadStream(this.originalFilePath);
+            filestream.pipe(res);
+        } else
+            res.sendStatus(404)
     }
 
     clear(cb) {

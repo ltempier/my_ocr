@@ -12,10 +12,10 @@ var express = require('express'),
     api = express.Router();
 
 var File = require('./components/File'),
-    elasticsearch = require('./components/Elasticsearch'),
+    database = require('./components/database'),
     security = require('./components/security');
 
-File.initFileDir(true);
+File.initFileDir();
 
 app.use(morgan('short'));
 app.use(bodyParser.urlencoded({extended: false}));
@@ -91,7 +91,16 @@ api.route('/files')
                 },
                 function (callback) {
                     async.each(files, function (file, next) {
-                        elasticsearch.indexFile(file, function (err, document) {
+                        database.indexFile(file, {
+                            tags: (req.body.tags || "").split(' '),
+                            user: {
+                                id: req.user.id,
+                                login: req.user.login
+                            },
+                            process: false,
+                            error: null,
+                            text: null
+                        }, function (err, document) {
                             if (!err)
                                 file.document = document;
                             next()
@@ -102,47 +111,8 @@ api.route('/files')
                 if (err)
                     res.status(403).json(err);
                 else {
+                    files.forEach((file) => file.publish());
                     res.sendStatus(200);
-                    async.eachLimit(files, 3, function (file, next) {
-                        var document = file.document,
-                            body = {
-                                tags: (req.body.tags || "").split(' '),
-                                user: {
-                                    id: req.user.id,
-                                    login: req.user.login
-                                },
-                                process: false,
-                                error: null,
-                                text: null,
-                                file: file.getInfo()
-                            };
-
-                        async.series([
-                            function (cb) {
-                                file.text(function (err, text) {
-                                    body.process = true;
-                                    if (err)
-                                        body.error = err;
-                                    else
-                                        body.text = text;
-                                    cb()
-                                })
-                            },
-                            function (cb) {
-                                if (document && document._id) {
-                                    elasticsearch.update(document, body, cb)
-                                } else
-                                    elasticsearch.index(body, cb);
-                            },
-                            function (cb) {
-                                file.clear(cb)
-                            }], function (err) {
-                            if (err)
-                                console.error(err);
-                            next()
-                        })
-                    }, function (err) {
-                    })
                 }
             })
         }
@@ -150,49 +120,67 @@ api.route('/files')
             res.status(403).json(new Error('no files'))
     });
 
+api.route('/items/:id')
+    .get(function (req, res) {
+        database.searchById(req.params.id, function (err, items) {
+            if (err)
+                res.status(err.status).json(err);
+            else if (results.length) {
+                res.status(200).json(items[0]);
+            } else
+                res.sendStatus(404)
+        })
+    })
+    .delete(function (req, res) {
+        database.searchById(req.params.id, function (err, items) {
+            if (err)
+                res.status(err.status).json(err);
+            else if (items.length) {
+                var item = items[0];
+                database.deleteById(item.id, function (err) {
+                    if (err)
+                        res.status(err.status).json(err);
+                    else {
+                        res.sendStatus(200);
+                        database.searchByHash(item.hash, function (err, items) {
+                            if (items && items.length == 0) {
+                                var file = new File(File.getFilePath(item.hash));
+                                file.remove(function (err) {
+                                    if (err)
+                                        console.error(err)
+                                })
+                            }
+                        })
+                    }
+                });
+            } else
+                res.sendStatus(404)
+        })
+    });
+
 api.route('/files/:hash')
     .get(function (req, res) {
         var hash = req.params.hash;
         if (hash && hash.length) {
-            elasticsearch.searchByHash(hash, function (err, hits) {
-                if (hits.length) {
-                    try {
-                        var option = hits[0]._source.file,
-                            file = new File(File.getFilePath(option.hash), option);
-                        file.download(res);
-                    } catch (err) {
-                        res.status(500).json(err.message);
-                    }
-                } else
-                    res.sendStatus(404)
-            })
+            var file = new File(File.getFilePath(req.params.hash));
+            file.download(res);
         } else
-            res.status(500).json(new Error('no hash'));
-    })
-    .delete(function (req, res) {
-        var hash = req.params.hash;
-        if (hash && hash.length) {
-            elasticsearch.deleteByHash(hash, function (err) {
-                if (err) {
-                    res.status(500).json(err);
-                } else {
-                    try {
-                        var file = new File(File.getFilePath(hash));
-                        file.remove(function (err) {
-                            if (err)
-                                res.status(500).json(err);
-                            else
-                                res.sendStatus(200)
-                        })
-                    }
-                    catch (e) {
-                        res.sendStatus(200)
-                    }
-                }
-            });
-        } else
-            res.status(500).json(new Error('no hash'));
+            res.status(403).json(new Error('no hash'));
     });
+
+//.delete(function (req, res) {
+//    var hash = req.params.hash;
+//    if (hash && hash.length) {
+//        var file = new File(File.getFilePath(hash));
+//        file.remove(function (err) {
+//            if (err)
+//                res.status(500).json(err);
+//            else
+//                res.sendStatus(200)
+//        })
+//    } else
+//        res.status(403).json(new Error('no hash'));
+//});
 
 api.route('/search')
     .get(function (req, res) {
@@ -212,11 +200,11 @@ api.route('/search')
                 };
             }
 
-            elasticsearch.searchByQuery(query, function (err, hits) {
+            database.searchByQuery(query, function (err, results) {
                 if (err)
-                    res.status(500).json(err.message);
+                    res.status(500).json(err);
                 else
-                    res.status(200).json(hits.map(hit => hit._source))
+                    res.status(200).json(results)
             })
 
         }

@@ -2,6 +2,7 @@
 
 var elasticsearch = require('elasticsearch'),
     async = require('async'),
+    _ = require('lodash'),
     config = require('../config');
 
 class Elasticsearch {
@@ -30,10 +31,9 @@ class Elasticsearch {
         }, callback);
     }
 
-    indexFile(file, callback) {
-        this.index({
-            file: file.getInfo()
-        }, callback);
+    indexFile(file, body, callback) {
+        body.file = file.getInfo();
+        this.index(body, callback);
     }
 
     index(body, callback) {
@@ -46,20 +46,25 @@ class Elasticsearch {
         }, callback);
     }
 
-    deleteByHash(hash, callback) {
-        this.searchByHash(hash, (err, hits) => {
+    searchById(id, callback) {
+        this.client.get({
+            index: 'files',
+            type: 'file',
+            id: id
+        }, function (err, resp) {
             if (err)
                 callback(err);
-            else {
-                async.each(hits, (hit, next) => {
-                    this.client.delete({
-                        index: hit._index,
-                        type: hit._type,
-                        id: hit._id
-                    }, next);
-                }, callback);
-            }
-        })
+            else
+                callback(null, Elasticsearch.formatSearchResults(resp || {}))
+        });
+    }
+
+    deleteById(id, callback) {
+        this.client.delete({
+            index: 'files',
+            type: 'file',
+            id: id
+        }, callback);
     }
 
     searchByHash(hash, callback) {
@@ -77,10 +82,25 @@ class Elasticsearch {
             if (err)
                 callback(err);
             else
-                callback(null, resp.hits.hits || [])
+                callback(null, Elasticsearch.formatSearchResults(resp.hits.hits || []))
         });
-
     }
+
+    //deleteByHash(hash, callback) {
+    //    this.searchByHash(hash, (err, hits) => {
+    //        if (err)
+    //            callback(err);
+    //        else {
+    //            async.each(hits, (hit, next) => {
+    //                this.client.delete({
+    //                    index: hit._index,
+    //                    type: hit._type,
+    //                    id: hit._id
+    //                }, next);
+    //            }, callback);
+    //        }
+    //    })
+    //}
 
     searchByQuery(query, callback) {
         this.client.search({
@@ -93,12 +113,20 @@ class Elasticsearch {
                 "from": 0,
                 "size": 50
             }
-        }, function (err, resp) {
+        }, function (err, res) {
             if (err)
                 callback(err);
             else
-                callback(null, resp.hits.hits || [])
+                callback(null, Elasticsearch.formatSearchResults(res.hits.hits || []))
         });
+    }
+
+    static formatSearchResults(results) {
+        if (!_.isArray(results))
+            results = [results];
+        return results.map(function (result) {
+            return _.extend(result._source, {id: result._id})
+        })
     }
 }
 

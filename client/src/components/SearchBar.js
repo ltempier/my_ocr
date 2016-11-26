@@ -91,11 +91,13 @@ class SearchBar extends Component {
                                                onChange={this.handleFileChange}/>
                                     </span>
                                     {
-                                        this.state.files.map((file, index)=> {
+                                        this.state.files.map((file, index) => {
                                             if ((/^image\//i).test(file.type))
-                                                return <img key={index} className="file-preview" src={file.preview}>
+                                                return <img key={index} className="file-preview" src={file.preview}/>
+
                                             else
-                                                return <span key={index}  className="label label-default">{file.name}</span>
+                                                return <span key={index}
+                                                             className="label label-default">{file.name}</span>
                                         })
                                     }
                                 </div>
