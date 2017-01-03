@@ -280,5 +280,5 @@ app.use('/api', api);
 
 var server = require('http').createServer(app);
 server.listen(config.port, config.ip, function () {
-    console.log('Express server listening')
+    console.log(`Express server listening ${config.ip}:${config.port}`)
 });
