@@ -30,7 +30,7 @@ export function reload(timeout = 1000) {
     return (dispatch) => {
         dispatch({type: types.SEARCH_ITEMS});
         setTimeout(function () {
-            console.log("refresh");
+            console.log("refresh", Date.now());
             dispatch(searchItems(oldQuery))
         }, timeout)
     }
@@ -74,7 +74,7 @@ export function remove(id) {
                     dispatch({type: types.REMOVE_ERROR, error: err.message});
                 else {
                     dispatch({type: types.REMOVE_SUCCESS});
-                    dispatch(reload())
+                    dispatch(reload(0))
                 }
             });
     }

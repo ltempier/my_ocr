@@ -1,7 +1,5 @@
 "use strict";
 
-process.env.NODE_ENV = process.env.NODE_ENV || 'docker';
-
 var async = require('async'),
     config = require('./config'),
     amqp = require('amqp'),
@@ -17,8 +15,6 @@ var async = require('async'),
 
     connection.on('ready', function () {
 
-        console.log('Start OCR worker');
-
         connection.queue('process-file', function (q) {
 
             q.bind('#');
@@ -27,7 +23,7 @@ var async = require('async'),
 
                 var file = new File(fileOption);
 
-                console.log('Start process', file);
+                console.log('Start process', file.fileName);
 
                 async.auto({
                     fetch: function (cb) {
@@ -75,14 +71,9 @@ var async = require('async'),
                     if (err)
                         console.error(err);
 
-                    console.log('End process', file);
+                    console.log('End process', file.fileName);
                 });
             });
         });
     });
 })();
-
-
-setTimeout(function () {
-    require('./test/publish-file');
-}, 500);

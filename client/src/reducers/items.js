@@ -13,8 +13,6 @@ export default function media(state = {data: [], isLoading: false, uploadError: 
         case types.SEARCH_ITEMS_ERROR:
             return Object.assign({}, state, {error: action.error, isLoading: false});
 
-
-
         case  types.UPLOAD_ERROR:
             return Object.assign({}, state, {uploadError: action.error});
 

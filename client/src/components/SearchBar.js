@@ -2,7 +2,7 @@
 
 import React, {Component} from 'react';
 import {connect} from 'react-redux'
-import {searchItems, upload} from '../actions/items'
+import {searchItems, upload, reload} from '../actions/items'
 
 
 class SearchBar extends Component {
@@ -22,6 +22,7 @@ class SearchBar extends Component {
 
         this.showUploadMenu = this.showUploadMenu.bind(this);
         this.submitUpload = this.submitUpload.bind(this);
+        this.refresh = this.refresh.bind(this);
 
         this.props.dispatch(searchItems(""))
     }
@@ -42,6 +43,11 @@ class SearchBar extends Component {
             files: this.state.files,
             tags: this.state.tags
         }))
+    }
+
+    refresh(e) {
+        e.preventDefault();
+        this.props.dispatch(reload(0))
     }
 
     handleFileChange(e) {
@@ -74,6 +80,11 @@ class SearchBar extends Component {
                         <input type="text" className="form-control" placeholder="Search"
                                onChange={this.handleSearchChange}/>
                         <span className="input-group-btn">
+                                <button className="btn btn-success" type="button" onClick={this.refresh}>
+                                    Refresh
+                                </button>
+                        </span>
+                        <span className="input-group-btn">
                                 <button className="btn btn-default" type="button" onClick={this.showUploadMenu}>
                                     {this.state.uploadOpen ? 'Close' : 'Upload'}
                                 </button>
@@ -93,11 +104,11 @@ class SearchBar extends Component {
                                     {
                                         this.state.files.map((file, index) => {
                                             if ((/^image\//i).test(file.type))
-                                                return <img key={index} className="file-preview" src={file.preview}/>
-
+                                                return <img key={index} className="file-preview"
+                                                            src={file.preview}/>
                                             else
-                                                return <span key={index}
-                                                             className="label label-default">{file.name}</span>
+                                                return <div key={index}
+                                                            className="label label-primary file-preview">{file.name}</div>
                                         })
                                     }
                                 </div>

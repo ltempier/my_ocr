@@ -8,12 +8,14 @@ class ListItem extends Component {
 
     constructor(props) {
         super(props);
+        this.textMaxLength = 500;
     }
 
 
     render() {
         var items = this.props.data.map((item, idx) => {
             let fileUrl = item.file.url + "?token=" + this.props.token;
+            let text = (item.text && item.text.length && item.text.length > this.textMaxLength) ? item.text.substring(0, this.textMaxLength) + ' ...' : item.text;
             return (
                 <div key={idx} className="row">
                     <div className="col-lg-12">
@@ -26,7 +28,7 @@ class ListItem extends Component {
                                         <img src={fileUrl}/>
                                     </div>
                                     <div className="col-lg-9 col-md-6 col-xs-12">
-                                        <p>{item.text}</p>
+                                        <p>{text}</p>
                                         <a href={fileUrl} target="_blank">{item.file.fileName}</a>
                                     </div>
                                 </div>
