@@ -16,12 +16,13 @@ services:
 
   worker:
       build: ./worker
-      links:
-        - elasticsearch
-        - rabbitmq
+#      links:
+#        - elasticsearch
+#        - rabbitmq
       environment:
         - NODE_VERSION=5.0.0
         - NPM_VERSION=3.3.6
+      command: tail -f /dev/null
 
   rabbitmq:
      image: rabbitmq
