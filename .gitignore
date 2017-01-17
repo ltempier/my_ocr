@@ -6,9 +6,6 @@ example/*
 tessdata
 tika-app-*
 
-!tmp
-tmp/*
-!files
-files/*
+data
 
 yarn.lock
