@@ -5,6 +5,14 @@ services:
     ports:
       - 127.0.0.1:9200:9200
 
+  rabbitmq:
+     image: rabbitmq
+     ports:
+      - 0.0.0.0:5672:5672
+     environment:
+      - RABBITMQ_DEFAULT_USER=ocr
+      - RABBITMQ_DEFAULT_PASS=secret_pass
+
   web:
       build: ./web
       links:
@@ -16,20 +24,16 @@ services:
 
   worker:
       build: ./worker
-#      links:
-#        - elasticsearch
-#        - rabbitmq
+      links:
+        - elasticsearch
+        - rabbitmq
       environment:
         - NODE_VERSION=5.0.0
         - NPM_VERSION=3.3.6
+        - TIKA_VERSION=1.14
       command: tail -f /dev/null
+      volumes:
+        - ../../my_ocr:/usr/src/my_ocr
 
-  rabbitmq:
-     image: rabbitmq
-     ports:
-      - 0.0.0.0:5672:5672
-     environment:
-      - RABBITMQ_DEFAULT_USER=ocr
-      - RABBITMQ_DEFAULT_PASS=secret_pass
 
 

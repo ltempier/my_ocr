@@ -36,17 +36,18 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && npm cache clear
 
 RUN mkdir -p /var/log/worker
-RUN mkdir -p /usr/share/tesseract-ocr
+RUN mkdir -p /usr/share/tesseract-ocr/tessdata
 RUN mkdir -p /usr/share/tika
+RUN mkdir -p /data
 
 RUN  wget https://github.com/tesseract-ocr/tessdata/archive/master.zip  -O  /tmp/tessdata.zip
-RUN  unzip /tmp/tessdata.zip -d /tmp \
-RUN  rm /tmp/tessdata.zip \
-RUN  mv /tmp/tessdata-* /usr/share/tesseract-ocr/tessdata
+RUN  unzip /tmp/tessdata.zip -d /tmp
+RUN  mv -u /tmp/tessdata-*/* /usr/share/tesseract-ocr/tessdata/
+RUN  rm -rf /tmp/tessdata*
 
 ENV TIKA_VERSION 1.14
 
-RUN wget "http://apache.crihan.fr/dist/tika/tika-app-$TIKA_VERSION.jar" -O  /usr/share/tika/tika-app-"$TIKA_VERSION".jar
+RUN wget "http://apache.crihan.fr/dist/tika/tika-app-$TIKA_VERSION.jar" -O  /usr/share/tika/tika-app.jar
 
 ADD ./etc/supervisor/conf.d /etc/supervisor/conf.d
 
