@@ -7,6 +7,8 @@ var async = require('async'),
     database = require('./components/database');
 
 (function () {
+    File.initFileDir(true);
+
     var connection = amqp.createConnection(config.rabbitmq);
 
     connection.on('error', function (e) {
@@ -28,15 +30,18 @@ var async = require('async'),
                 async.auto({
                     fetch: function (cb) {
                         if (file.exists())
-                            cb()
-                        else {
-                            // TODO fetch API
+                            cb();
+                        else if (file.contents) {
+                            file.originalFilePath = File.getTmpPath(file.getHash(), file.extension);
+                            file.write(file.originalFilePath, cb);
                         }
+                        else
+                            cb(new Error('can\'t fetch file'))
                     },
                     document: ['fetch', function (results, cb) {
-                        if (file.document) {
-                            cb(null, file.document)
-                        } else {
+                        if (file.document)
+                            cb(null, file.document);
+                        else
                             database.indexFile(file, function (err, document) {
                                 if (err)
                                     cb(err);
@@ -45,7 +50,6 @@ var async = require('async'),
                                     cb(null, document)
                                 }
                             });
-                        }
                     }],
                     text: ['fetch', function (results, cb) {
                         file.text(function (err, text) {
@@ -54,10 +58,13 @@ var async = require('async'),
                                 error: null,
                                 text: null
                             };
-                            if (err)
+                            if (err) {
+                                console.log(err);
                                 result.error = err;
-                            else
+                            }
+                            else if (text)
                                 result.text = text;
+
                             cb(null, result)
                         });
                     }],
@@ -70,7 +77,6 @@ var async = require('async'),
                 }, function (err) {
                     if (err)
                         console.error(err);
-
                     console.log('End process', file.fileName);
                 });
             });

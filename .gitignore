@@ -2,13 +2,11 @@
 my_ocr.iml
 node_modules
 example/*
+client/static/bundle*
 
 tessdata
 tika-app-*
 
-!tmp
-tmp/*
-!files
-files/*
+data*
 
 yarn.lock

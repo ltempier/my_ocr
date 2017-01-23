@@ -15,13 +15,17 @@ var path = require('path'),
 class File {
     constructor(filePath, options) {
         this.log = false;
-        this.document = null;
+        this.document = null; //elasticsearch ref
+        this.contents = null;
 
-        if (!_.isString(filePath) && _.isObject(filePath))
+        if (!_.isString(filePath) && _.isObject(filePath)) //IF first argument is object -> create object from object
             options = filePath;
         else {
             this.originalFilePath = filePath;
             this.fileName = path.basename(this.originalFilePath);
+            this.mime = mime.lookup(this.originalFilePath);
+            this.extension = path.extname(this.fileName);
+            this.read()
         }
 
         _.each(options, (value, key) => {
@@ -29,12 +33,33 @@ class File {
                 this[key] = value
         });
 
-        this.mime = mime.lookup(this.originalFilePath);
-        this.extension = path.extname(this.fileName);
-
         this.tmpFilePath = File.getTmpPath(this.getHash(), this.extension);
         this.destFilePath = File.getFilePath(this.getHash());
         this.url = File.getUrl(this.getHash())
+    }
+
+    read(cb) {
+        const encoding = null;
+        this.contents = null;
+        if (cb && _.isFunction(cb))
+            fs.readFile(this.originalFilePath, {encoding: encoding}, (err, data)=> {
+                if (err)
+                    cb(err);
+                else {
+                    this.contents = data;
+                    cb()
+                }
+            });
+        else
+            this.contents = fs.readFileSync(this.originalFilePath, {encoding: encoding})
+    }
+
+    write(filePath, cb) {
+        let buffer = Buffer.from(this.contents);
+        if (cb && _.isFunction(cb))
+            fs.writeFile(filePath, buffer, cb);
+        else
+            fs.writeFileSync(filePath, buffer)
     }
 
     publish() {
@@ -46,7 +71,9 @@ class File {
                 console.error("Error from amqp: ", e);
             });
             connection.on('ready', () => {
-                connection.publish('process-file', this, {}, function () {
+                connection.publish('process-file', this, {deliveryMode: 2}, function (err) {
+                    if (err)
+                        console.log(err);
                     connection.disconnect()
                 });
             });
@@ -96,7 +123,7 @@ class File {
         if (ocr)
             ocr.process(callback);
         else
-            callback()
+            callback(new Error('File not supported by OCR'))
     }
 
     download(res) {
@@ -157,6 +184,11 @@ class File {
     getHash() {
         if (this.md5)
             return this.md5;
+
+        //TODO if content
+
+        if (!this.exists(this.originalFilePath))
+            throw new Error('Can\'t hash file if not exist');
 
         var bufferSize = 1024 * 8,
             fd = fs.openSync(this.originalFilePath, 'r'),

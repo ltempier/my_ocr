@@ -78,15 +78,13 @@ api.route('/files')
 
             async.series([
                 function (callback) {
-                    async.eachOf(files, function (file, index, next) {
-                        file.check(true, function (err) { //TODO check in elasticsearch too
-                            if (err) {
-                                files.splice(index, 1);
-                                file.clear(next);
-                            }
-                            else
-                                file.save(next)
-                        })
+                    async.each(files, function (file, next) {
+                        file.save(next)
+                    }, callback)
+                },
+                function (callback) {
+                    async.each(files, function (file, next) {
+                        file.clear(next)
                     }, callback)
                 },
                 function (callback) {
