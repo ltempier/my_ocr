@@ -27,11 +27,12 @@ var async = require('async'),
 
                 async.auto({
                     fetch: function (cb) {
-                        if (file.exists())
-                            cb()
-                        else {
-                            // TODO fetch API
-                        }
+                        //if (file.exists())
+                        //    cb();
+                        //else if (file.contents) {
+                        file.write(file.originalFilePath, cb)
+                        //} else
+                        //    cb(new Error('can\'t process file'))
                     },
                     document: ['fetch', function (results, cb) {
                         if (file.document) {

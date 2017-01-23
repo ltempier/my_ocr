@@ -1,5 +1,5 @@
 'use strict';
-
+const path = require('path');
 module.exports = {
     env: 'development',
     elasticsearch: {
@@ -12,5 +12,5 @@ module.exports = {
         login: 'ocr',
         password: 'secret_pass'
     },
-    ip: "0.0.0.0"
+    data: path.normalize(__dirname + '/../../data-worker')
 };

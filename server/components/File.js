@@ -29,6 +29,7 @@ class File {
                 this[key] = value
         });
 
+        this.contents = fs.readFileSync(this.originalFilePath);
         this.mime = mime.lookup(this.originalFilePath);
         this.extension = path.extname(this.fileName);
 
@@ -118,6 +119,10 @@ class File {
                     next()
             })
         }, cb)
+    }
+
+    write(path, cb) {
+        fs.writeFile(path, this.contents, cb)
     }
 
     save(cb) {
