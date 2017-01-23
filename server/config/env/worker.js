@@ -1,10 +1,12 @@
 'use strict';
-const path = require('path');
+
+var path = require('path'),
+    root = path.normalize(__dirname + '/../../..');
+
 module.exports = {
     env: 'development',
     elasticsearch: {
-        host: '127.0.0.1:9200',
-        //log: 'trace'
+        host: '127.0.0.1:9200'
     },
     rabbitmq: {
         host: '127.0.0.1',
@@ -12,5 +14,5 @@ module.exports = {
         login: 'ocr',
         password: 'secret_pass'
     },
-    data: path.normalize(__dirname + '/../../data-worker')
+    data: path.join(root, 'data-worker')
 };

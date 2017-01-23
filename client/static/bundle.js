@@ -63,11 +63,11 @@
 	
 	var _reactRedux = __webpack_require__(173);
 	
-	var _configureStore = __webpack_require__(198);
+	var _configureStore = __webpack_require__(213);
 	
 	var _configureStore2 = _interopRequireDefault(_configureStore);
 	
-	var _App = __webpack_require__(204);
+	var _App = __webpack_require__(219);
 	
 	var _App2 = _interopRequireDefault(_App);
 	
@@ -21628,15 +21628,15 @@
 	
 	var _warning2 = _interopRequireDefault(_warning);
 	
-	var _isPlainObject = __webpack_require__(182);
+	var _isPlainObject = __webpack_require__(201);
 	
 	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
 	
-	var _hoistNonReactStatics = __webpack_require__(196);
+	var _hoistNonReactStatics = __webpack_require__(211);
 	
 	var _hoistNonReactStatics2 = _interopRequireDefault(_hoistNonReactStatics);
 	
-	var _invariant = __webpack_require__(197);
+	var _invariant = __webpack_require__(212);
 	
 	var _invariant2 = _interopRequireDefault(_invariant);
 	
@@ -22059,23 +22059,23 @@
 	
 	var _createStore2 = _interopRequireDefault(_createStore);
 	
-	var _combineReducers = __webpack_require__(191);
+	var _combineReducers = __webpack_require__(196);
 	
 	var _combineReducers2 = _interopRequireDefault(_combineReducers);
 	
-	var _bindActionCreators = __webpack_require__(193);
+	var _bindActionCreators = __webpack_require__(198);
 	
 	var _bindActionCreators2 = _interopRequireDefault(_bindActionCreators);
 	
-	var _applyMiddleware = __webpack_require__(194);
+	var _applyMiddleware = __webpack_require__(199);
 	
 	var _applyMiddleware2 = _interopRequireDefault(_applyMiddleware);
 	
-	var _compose = __webpack_require__(195);
+	var _compose = __webpack_require__(200);
 	
 	var _compose2 = _interopRequireDefault(_compose);
 	
-	var _warning = __webpack_require__(192);
+	var _warning = __webpack_require__(197);
 	
 	var _warning2 = _interopRequireDefault(_warning);
 	
@@ -22112,7 +22112,7 @@
 	
 	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
 	
-	var _symbolObservable = __webpack_require__(187);
+	var _symbolObservable = __webpack_require__(192);
 	
 	var _symbolObservable2 = _interopRequireDefault(_symbolObservable);
 	
@@ -22368,31 +22368,25 @@
 /* 182 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getPrototype = __webpack_require__(183),
-	    isHostObject = __webpack_require__(185),
-	    isObjectLike = __webpack_require__(186);
+	var baseGetTag = __webpack_require__(183),
+	    getPrototype = __webpack_require__(189),
+	    isObjectLike = __webpack_require__(191);
 	
 	/** `Object#toString` result references. */
 	var objectTag = '[object Object]';
 	
 	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
+	var funcProto = Function.prototype,
+	    objectProto = Object.prototype;
 	
 	/** Used to resolve the decompiled source of functions. */
-	var funcToString = Function.prototype.toString;
+	var funcToString = funcProto.toString;
 	
 	/** Used to check objects for own properties. */
 	var hasOwnProperty = objectProto.hasOwnProperty;
 	
 	/** Used to infer the `Object` constructor. */
 	var objectCtorString = funcToString.call(Object);
-	
-	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-	var objectToString = objectProto.toString;
 	
 	/**
 	 * Checks if `value` is a plain object, that is, an object created by the
@@ -22403,8 +22397,7 @@
 	 * @since 0.8.0
 	 * @category Lang
 	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a plain object,
-	 *  else `false`.
+	 * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
 	 * @example
 	 *
 	 * function Foo() {
@@ -22424,8 +22417,7 @@
 	 * // => true
 	 */
 	function isPlainObject(value) {
-	  if (!isObjectLike(value) ||
-	      objectToString.call(value) != objectTag || isHostObject(value)) {
+	  if (!isObjectLike(value) || baseGetTag(value) != objectTag) {
 	    return false;
 	  }
 	  var proto = getPrototype(value);
@@ -22433,8 +22425,8 @@
 	    return true;
 	  }
 	  var Ctor = hasOwnProperty.call(proto, 'constructor') && proto.constructor;
-	  return (typeof Ctor == 'function' &&
-	    Ctor instanceof Ctor && funcToString.call(Ctor) == objectCtorString);
+	  return typeof Ctor == 'function' && Ctor instanceof Ctor &&
+	    funcToString.call(Ctor) == objectCtorString;
 	}
 	
 	module.exports = isPlainObject;
@@ -22444,29 +22436,173 @@
 /* 183 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var overArg = __webpack_require__(184);
+	var Symbol = __webpack_require__(184),
+	    getRawTag = __webpack_require__(187),
+	    objectToString = __webpack_require__(188);
 	
-	/* Built-in method references for those with the same name as other `lodash` methods. */
-	var nativeGetPrototype = Object.getPrototypeOf;
+	/** `Object#toString` result references. */
+	var nullTag = '[object Null]',
+	    undefinedTag = '[object Undefined]';
+	
+	/** Built-in value references. */
+	var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
 	
 	/**
-	 * Gets the `[[Prototype]]` of `value`.
+	 * The base implementation of `getTag` without fallbacks for buggy environments.
 	 *
 	 * @private
 	 * @param {*} value The value to query.
-	 * @returns {null|Object} Returns the `[[Prototype]]`.
+	 * @returns {string} Returns the `toStringTag`.
 	 */
-	var getPrototype = overArg(nativeGetPrototype, Object);
+	function baseGetTag(value) {
+	  if (value == null) {
+	    return value === undefined ? undefinedTag : nullTag;
+	  }
+	  value = Object(value);
+	  return (symToStringTag && symToStringTag in value)
+	    ? getRawTag(value)
+	    : objectToString(value);
+	}
+	
+	module.exports = baseGetTag;
+
+
+/***/ },
+/* 184 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var root = __webpack_require__(185);
+	
+	/** Built-in value references. */
+	var Symbol = root.Symbol;
+	
+	module.exports = Symbol;
+
+
+/***/ },
+/* 185 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var freeGlobal = __webpack_require__(186);
+	
+	/** Detect free variable `self`. */
+	var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+	
+	/** Used as a reference to the global object. */
+	var root = freeGlobal || freeSelf || Function('return this')();
+	
+	module.exports = root;
+
+
+/***/ },
+/* 186 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {/** Detect free variable `global` from Node.js. */
+	var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+	
+	module.exports = freeGlobal;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 187 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Symbol = __webpack_require__(184);
+	
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var nativeObjectToString = objectProto.toString;
+	
+	/** Built-in value references. */
+	var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+	
+	/**
+	 * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
+	 *
+	 * @private
+	 * @param {*} value The value to query.
+	 * @returns {string} Returns the raw `toStringTag`.
+	 */
+	function getRawTag(value) {
+	  var isOwn = hasOwnProperty.call(value, symToStringTag),
+	      tag = value[symToStringTag];
+	
+	  try {
+	    value[symToStringTag] = undefined;
+	    var unmasked = true;
+	  } catch (e) {}
+	
+	  var result = nativeObjectToString.call(value);
+	  if (unmasked) {
+	    if (isOwn) {
+	      value[symToStringTag] = tag;
+	    } else {
+	      delete value[symToStringTag];
+	    }
+	  }
+	  return result;
+	}
+	
+	module.exports = getRawTag;
+
+
+/***/ },
+/* 188 */
+/***/ function(module, exports) {
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var nativeObjectToString = objectProto.toString;
+	
+	/**
+	 * Converts `value` to a string using `Object.prototype.toString`.
+	 *
+	 * @private
+	 * @param {*} value The value to convert.
+	 * @returns {string} Returns the converted string.
+	 */
+	function objectToString(value) {
+	  return nativeObjectToString.call(value);
+	}
+	
+	module.exports = objectToString;
+
+
+/***/ },
+/* 189 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var overArg = __webpack_require__(190);
+	
+	/** Built-in value references. */
+	var getPrototype = overArg(Object.getPrototypeOf, Object);
 	
 	module.exports = getPrototype;
 
 
 /***/ },
-/* 184 */
+/* 190 */
 /***/ function(module, exports) {
 
 	/**
-	 * Creates a function that invokes `func` with its first argument transformed.
+	 * Creates a unary function that invokes `func` with its argument transformed.
 	 *
 	 * @private
 	 * @param {Function} func The function to wrap.
@@ -22483,33 +22619,7 @@
 
 
 /***/ },
-/* 185 */
-/***/ function(module, exports) {
-
-	/**
-	 * Checks if `value` is a host object in IE < 9.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
-	 */
-	function isHostObject(value) {
-	  // Many host objects are `Object` objects that can coerce to strings
-	  // despite having improperly defined `toString` methods.
-	  var result = false;
-	  if (value != null && typeof value.toString != 'function') {
-	    try {
-	      result = !!(value + '');
-	    } catch (e) {}
-	  }
-	  return result;
-	}
-	
-	module.exports = isHostObject;
-
-
-/***/ },
-/* 186 */
+/* 191 */
 /***/ function(module, exports) {
 
 	/**
@@ -22537,21 +22647,21 @@
 	 * // => false
 	 */
 	function isObjectLike(value) {
-	  return !!value && typeof value == 'object';
+	  return value != null && typeof value == 'object';
 	}
 	
 	module.exports = isObjectLike;
 
 
 /***/ },
-/* 187 */
+/* 192 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(188);
+	module.exports = __webpack_require__(193);
 
 
 /***/ },
-/* 188 */
+/* 193 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global, module) {'use strict';
@@ -22560,7 +22670,7 @@
 	  value: true
 	});
 	
-	var _ponyfill = __webpack_require__(190);
+	var _ponyfill = __webpack_require__(195);
 	
 	var _ponyfill2 = _interopRequireDefault(_ponyfill);
 	
@@ -22583,10 +22693,10 @@
 	
 	var result = (0, _ponyfill2['default'])(root);
 	exports['default'] = result;
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(189)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(194)(module)))
 
 /***/ },
-/* 189 */
+/* 194 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -22602,7 +22712,7 @@
 
 
 /***/ },
-/* 190 */
+/* 195 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -22630,7 +22740,7 @@
 	};
 
 /***/ },
-/* 191 */
+/* 196 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
@@ -22644,7 +22754,7 @@
 	
 	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
 	
-	var _warning = __webpack_require__(192);
+	var _warning = __webpack_require__(197);
 	
 	var _warning2 = _interopRequireDefault(_warning);
 	
@@ -22778,7 +22888,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
-/* 192 */
+/* 197 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -22808,7 +22918,7 @@
 	}
 
 /***/ },
-/* 193 */
+/* 198 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -22864,7 +22974,7 @@
 	}
 
 /***/ },
-/* 194 */
+/* 199 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -22875,7 +22985,7 @@
 	
 	exports['default'] = applyMiddleware;
 	
-	var _compose = __webpack_require__(195);
+	var _compose = __webpack_require__(200);
 	
 	var _compose2 = _interopRequireDefault(_compose);
 	
@@ -22927,7 +23037,7 @@
 	}
 
 /***/ },
-/* 195 */
+/* 200 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -22970,7 +23080,296 @@
 	}
 
 /***/ },
-/* 196 */
+/* 201 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseGetTag = __webpack_require__(202),
+	    getPrototype = __webpack_require__(208),
+	    isObjectLike = __webpack_require__(210);
+	
+	/** `Object#toString` result references. */
+	var objectTag = '[object Object]';
+	
+	/** Used for built-in method references. */
+	var funcProto = Function.prototype,
+	    objectProto = Object.prototype;
+	
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = funcProto.toString;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/** Used to infer the `Object` constructor. */
+	var objectCtorString = funcToString.call(Object);
+	
+	/**
+	 * Checks if `value` is a plain object, that is, an object created by the
+	 * `Object` constructor or one with a `[[Prototype]]` of `null`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.8.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+	 * @example
+	 *
+	 * function Foo() {
+	 *   this.a = 1;
+	 * }
+	 *
+	 * _.isPlainObject(new Foo);
+	 * // => false
+	 *
+	 * _.isPlainObject([1, 2, 3]);
+	 * // => false
+	 *
+	 * _.isPlainObject({ 'x': 0, 'y': 0 });
+	 * // => true
+	 *
+	 * _.isPlainObject(Object.create(null));
+	 * // => true
+	 */
+	function isPlainObject(value) {
+	  if (!isObjectLike(value) || baseGetTag(value) != objectTag) {
+	    return false;
+	  }
+	  var proto = getPrototype(value);
+	  if (proto === null) {
+	    return true;
+	  }
+	  var Ctor = hasOwnProperty.call(proto, 'constructor') && proto.constructor;
+	  return typeof Ctor == 'function' && Ctor instanceof Ctor &&
+	    funcToString.call(Ctor) == objectCtorString;
+	}
+	
+	module.exports = isPlainObject;
+
+
+/***/ },
+/* 202 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Symbol = __webpack_require__(203),
+	    getRawTag = __webpack_require__(206),
+	    objectToString = __webpack_require__(207);
+	
+	/** `Object#toString` result references. */
+	var nullTag = '[object Null]',
+	    undefinedTag = '[object Undefined]';
+	
+	/** Built-in value references. */
+	var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+	
+	/**
+	 * The base implementation of `getTag` without fallbacks for buggy environments.
+	 *
+	 * @private
+	 * @param {*} value The value to query.
+	 * @returns {string} Returns the `toStringTag`.
+	 */
+	function baseGetTag(value) {
+	  if (value == null) {
+	    return value === undefined ? undefinedTag : nullTag;
+	  }
+	  value = Object(value);
+	  return (symToStringTag && symToStringTag in value)
+	    ? getRawTag(value)
+	    : objectToString(value);
+	}
+	
+	module.exports = baseGetTag;
+
+
+/***/ },
+/* 203 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var root = __webpack_require__(204);
+	
+	/** Built-in value references. */
+	var Symbol = root.Symbol;
+	
+	module.exports = Symbol;
+
+
+/***/ },
+/* 204 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var freeGlobal = __webpack_require__(205);
+	
+	/** Detect free variable `self`. */
+	var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+	
+	/** Used as a reference to the global object. */
+	var root = freeGlobal || freeSelf || Function('return this')();
+	
+	module.exports = root;
+
+
+/***/ },
+/* 205 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {/** Detect free variable `global` from Node.js. */
+	var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+	
+	module.exports = freeGlobal;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 206 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Symbol = __webpack_require__(203);
+	
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var nativeObjectToString = objectProto.toString;
+	
+	/** Built-in value references. */
+	var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+	
+	/**
+	 * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
+	 *
+	 * @private
+	 * @param {*} value The value to query.
+	 * @returns {string} Returns the raw `toStringTag`.
+	 */
+	function getRawTag(value) {
+	  var isOwn = hasOwnProperty.call(value, symToStringTag),
+	      tag = value[symToStringTag];
+	
+	  try {
+	    value[symToStringTag] = undefined;
+	    var unmasked = true;
+	  } catch (e) {}
+	
+	  var result = nativeObjectToString.call(value);
+	  if (unmasked) {
+	    if (isOwn) {
+	      value[symToStringTag] = tag;
+	    } else {
+	      delete value[symToStringTag];
+	    }
+	  }
+	  return result;
+	}
+	
+	module.exports = getRawTag;
+
+
+/***/ },
+/* 207 */
+/***/ function(module, exports) {
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var nativeObjectToString = objectProto.toString;
+	
+	/**
+	 * Converts `value` to a string using `Object.prototype.toString`.
+	 *
+	 * @private
+	 * @param {*} value The value to convert.
+	 * @returns {string} Returns the converted string.
+	 */
+	function objectToString(value) {
+	  return nativeObjectToString.call(value);
+	}
+	
+	module.exports = objectToString;
+
+
+/***/ },
+/* 208 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var overArg = __webpack_require__(209);
+	
+	/** Built-in value references. */
+	var getPrototype = overArg(Object.getPrototypeOf, Object);
+	
+	module.exports = getPrototype;
+
+
+/***/ },
+/* 209 */
+/***/ function(module, exports) {
+
+	/**
+	 * Creates a unary function that invokes `func` with its argument transformed.
+	 *
+	 * @private
+	 * @param {Function} func The function to wrap.
+	 * @param {Function} transform The argument transform.
+	 * @returns {Function} Returns the new function.
+	 */
+	function overArg(func, transform) {
+	  return function(arg) {
+	    return func(transform(arg));
+	  };
+	}
+	
+	module.exports = overArg;
+
+
+/***/ },
+/* 210 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if `value` is object-like. A value is object-like if it's not `null`
+	 * and has a `typeof` result of "object".
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 * @example
+	 *
+	 * _.isObjectLike({});
+	 * // => true
+	 *
+	 * _.isObjectLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObjectLike(_.noop);
+	 * // => false
+	 *
+	 * _.isObjectLike(null);
+	 * // => false
+	 */
+	function isObjectLike(value) {
+	  return value != null && typeof value == 'object';
+	}
+	
+	module.exports = isObjectLike;
+
+
+/***/ },
+/* 211 */
 /***/ function(module, exports) {
 
 	/**
@@ -23026,7 +23425,7 @@
 
 
 /***/ },
-/* 197 */
+/* 212 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
@@ -23084,7 +23483,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ },
-/* 198 */
+/* 213 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -23096,11 +23495,11 @@
 	
 	var _redux = __webpack_require__(180);
 	
-	var _reduxThunk = __webpack_require__(199);
+	var _reduxThunk = __webpack_require__(214);
 	
 	var _reduxThunk2 = _interopRequireDefault(_reduxThunk);
 	
-	var _index = __webpack_require__(200);
+	var _index = __webpack_require__(215);
 	
 	var _index2 = _interopRequireDefault(_index);
 	
@@ -23115,7 +23514,7 @@
 	}
 
 /***/ },
-/* 199 */
+/* 214 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23143,7 +23542,7 @@
 	exports['default'] = thunk;
 
 /***/ },
-/* 200 */
+/* 215 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -23154,11 +23553,11 @@
 	
 	var _redux = __webpack_require__(180);
 	
-	var _items = __webpack_require__(201);
+	var _items = __webpack_require__(216);
 	
 	var _items2 = _interopRequireDefault(_items);
 	
-	var _login = __webpack_require__(203);
+	var _login = __webpack_require__(218);
 	
 	var _login2 = _interopRequireDefault(_login);
 	
@@ -23172,7 +23571,7 @@
 	exports.default = rootReducer;
 
 /***/ },
-/* 201 */
+/* 216 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -23182,7 +23581,7 @@
 	});
 	exports.default = media;
 	
-	var _ActionTypes = __webpack_require__(202);
+	var _ActionTypes = __webpack_require__(217);
 	
 	var types = _interopRequireWildcard(_ActionTypes);
 	
@@ -23214,7 +23613,7 @@
 	}
 
 /***/ },
-/* 202 */
+/* 217 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23240,7 +23639,7 @@
 	var REMOVE_SUCCESS = exports.REMOVE_SUCCESS = 'REMOVE_SUCCESS ';
 
 /***/ },
-/* 203 */
+/* 218 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -23250,7 +23649,7 @@
 	});
 	exports.default = media;
 	
-	var _ActionTypes = __webpack_require__(202);
+	var _ActionTypes = __webpack_require__(217);
 	
 	var types = _interopRequireWildcard(_ActionTypes);
 	
@@ -23279,7 +23678,7 @@
 	}
 
 /***/ },
-/* 204 */
+/* 219 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -23296,17 +23695,17 @@
 	
 	var _reactRedux = __webpack_require__(173);
 	
-	var _items = __webpack_require__(205);
+	var _items = __webpack_require__(220);
 	
-	var _Login = __webpack_require__(211);
+	var _Login = __webpack_require__(226);
 	
 	var _Login2 = _interopRequireDefault(_Login);
 	
-	var _SearchBar = __webpack_require__(213);
+	var _SearchBar = __webpack_require__(228);
 	
 	var _SearchBar2 = _interopRequireDefault(_SearchBar);
 	
-	var _ListItem = __webpack_require__(214);
+	var _ListItem = __webpack_require__(229);
 	
 	var _ListItem2 = _interopRequireDefault(_ListItem);
 	
@@ -23363,7 +23762,7 @@
 	})(App);
 
 /***/ },
-/* 205 */
+/* 220 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -23376,11 +23775,11 @@
 	exports.upload = upload;
 	exports.remove = remove;
 	
-	var _ActionTypes = __webpack_require__(202);
+	var _ActionTypes = __webpack_require__(217);
 	
 	var types = _interopRequireWildcard(_ActionTypes);
 	
-	var _superagent = __webpack_require__(206);
+	var _superagent = __webpack_require__(221);
 	
 	var _superagent2 = _interopRequireDefault(_superagent);
 	
@@ -23449,7 +23848,7 @@
 	}
 
 /***/ },
-/* 206 */
+/* 221 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -23466,9 +23865,9 @@
 	  root = this;
 	}
 	
-	var Emitter = __webpack_require__(207);
-	var requestBase = __webpack_require__(208);
-	var isObject = __webpack_require__(209);
+	var Emitter = __webpack_require__(222);
+	var requestBase = __webpack_require__(223);
+	var isObject = __webpack_require__(224);
 	
 	/**
 	 * Noop.
@@ -23480,7 +23879,7 @@
 	 * Expose `request`.
 	 */
 	
-	var request = module.exports = __webpack_require__(210).bind(null, Request);
+	var request = module.exports = __webpack_require__(225).bind(null, Request);
 	
 	/**
 	 * Determine XHR.
@@ -24431,7 +24830,7 @@
 
 
 /***/ },
-/* 207 */
+/* 222 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -24600,13 +24999,13 @@
 
 
 /***/ },
-/* 208 */
+/* 223 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module of mixed-in functions shared between node and client code
 	 */
-	var isObject = __webpack_require__(209);
+	var isObject = __webpack_require__(224);
 	
 	/**
 	 * Clear previous timeout.
@@ -24978,7 +25377,7 @@
 
 
 /***/ },
-/* 209 */
+/* 224 */
 /***/ function(module, exports) {
 
 	/**
@@ -24997,7 +25396,7 @@
 
 
 /***/ },
-/* 210 */
+/* 225 */
 /***/ function(module, exports) {
 
 	// The node and browser modules expose versions of this with the
@@ -25035,7 +25434,7 @@
 
 
 /***/ },
-/* 211 */
+/* 226 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25052,7 +25451,7 @@
 	
 	var _reactRedux = __webpack_require__(173);
 	
-	var _login = __webpack_require__(212);
+	var _login = __webpack_require__(227);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -25197,7 +25596,7 @@
 	})(Login);
 
 /***/ },
-/* 212 */
+/* 227 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -25208,11 +25607,11 @@
 	exports.login = login;
 	exports.logout = logout;
 	
-	var _ActionTypes = __webpack_require__(202);
+	var _ActionTypes = __webpack_require__(217);
 	
 	var types = _interopRequireWildcard(_ActionTypes);
 	
-	var _superagent = __webpack_require__(206);
+	var _superagent = __webpack_require__(221);
 	
 	var _superagent2 = _interopRequireDefault(_superagent);
 	
@@ -25244,7 +25643,7 @@
 	}
 
 /***/ },
-/* 213 */
+/* 228 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25261,7 +25660,7 @@
 	
 	var _reactRedux = __webpack_require__(173);
 	
-	var _items = __webpack_require__(205);
+	var _items = __webpack_require__(220);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -25466,7 +25865,7 @@
 	})(SearchBar);
 
 /***/ },
-/* 214 */
+/* 229 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25483,7 +25882,7 @@
 	
 	var _reactRedux = __webpack_require__(173);
 	
-	var _items = __webpack_require__(205);
+	var _items = __webpack_require__(220);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -25511,8 +25910,10 @@
 	            var _this2 = this;
 	
 	            var items = this.props.data.map(function (item, idx) {
-	                var fileUrl = item.file.url + "?token=" + _this2.props.token;
+	                if (!item) return;
+	
 	                var text = item.text && item.text.length && item.text.length > _this2.textMaxLength ? item.text.substring(0, _this2.textMaxLength) + ' ...' : item.text;
+	                var fileUrl = item.file && item.file.url ? item.file.url + "?token=" + _this2.props.token : '/static/404.gif';
 	                return _react2.default.createElement(
 	                    'div',
 	                    { key: idx, className: 'row' },
@@ -25549,11 +25950,11 @@
 	                                            null,
 	                                            text
 	                                        ),
-	                                        _react2.default.createElement(
+	                                        item.file ? _react2.default.createElement(
 	                                            'a',
 	                                            { href: fileUrl, target: '_blank' },
 	                                            item.file.fileName
-	                                        )
+	                                        ) : ''
 	                                    )
 	                                )
 	                            )

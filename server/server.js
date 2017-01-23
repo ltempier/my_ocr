@@ -84,6 +84,11 @@ api.route('/files')
                 },
                 function (callback) {
                     async.each(files, function (file, next) {
+                        file.clear(next)
+                    }, callback)
+                },
+                function (callback) {
+                    async.each(files, function (file, next) {
                         database.indexFile(file, {
                             tags: (req.body.tags || "").split(' '),
                             user: {
