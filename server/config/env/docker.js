@@ -8,8 +8,8 @@ module.exports = {
     rabbitmq: {
         host: 'rabbitmq',
         port: 5672,
-        login: 'guest',
-        password: 'guest'
+        login: 'ocr',
+        password: 'secret_pass'
     },
     TIKA_APP_JAR: '/usr/share/tika/tika-app.jar',
     TESSDATA_PREFIX: '/usr/share/tesseract-ocr/',

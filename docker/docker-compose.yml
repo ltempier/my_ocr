@@ -13,14 +13,19 @@ services:
       - RABBITMQ_DEFAULT_USER=ocr
       - RABBITMQ_DEFAULT_PASS=secret_pass
 
+
   web:
       build: ./web
       links:
         - elasticsearch
         - rabbitmq
+      ports:
+        - 0.0.0.0:3000:3000
       environment:
         - NODE_VERSION=5.0.0
         - NPM_VERSION=3.3.6
+      volumes:
+        - ../../my_ocr:/usr/src/my_ocr
 
   worker:
       build: ./worker
@@ -28,10 +33,10 @@ services:
         - elasticsearch
         - rabbitmq
       environment:
+        - NODE_ENV=worker
         - NODE_VERSION=5.0.0
         - NPM_VERSION=3.3.6
         - TIKA_VERSION=1.14
-      command: tail -f /dev/null
       volumes:
         - ../../my_ocr:/usr/src/my_ocr
 

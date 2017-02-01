@@ -35,7 +35,7 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && npm install -g npm@"$NPM_VERSION" \
   && npm cache clear
 
-RUN mkdir -p /var/log/worker
+RUN mkdir -p /var/log/
 RUN mkdir -p /usr/share/tesseract-ocr/tessdata
 RUN mkdir -p /usr/share/tika
 RUN mkdir -p /data

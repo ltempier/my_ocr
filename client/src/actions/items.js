@@ -6,7 +6,6 @@ import request  from 'superagent';
 var oldQuery = "";
 
 export function searchItems(query) {
-    oldQuery = query;
     return (dispatch, getState) => {
         const token = getState().login.token,
             url = `/api/search?q=${query}`;
@@ -20,13 +19,15 @@ export function searchItems(query) {
             .end(function (err, res) {
                 if (err)
                     dispatch({type: types.SEARCH_ITEMS_ERROR, error: err.message});
-                else
+                else {
+                    oldQuery = query;
                     dispatch({type: types.SEARCH_ITEMS_SUCCESS, data: res.body || []});
+                }
             });
     }
 }
 
-export function reload(timeout = 1000) {
+export function reload(timeout = 0) {
     return (dispatch) => {
         dispatch({type: types.SEARCH_ITEMS});
         setTimeout(function () {
@@ -65,6 +66,7 @@ export function upload(obj) {
 export function remove(id) {
     return (dispatch, getState) => {
         const token = getState().login.token;
+        var data = getState().items.data;
         dispatch({type: types.REMOVING});
         return request
             .delete('/api/items/' + id)
@@ -73,8 +75,10 @@ export function remove(id) {
                 if (err)
                     dispatch({type: types.REMOVE_ERROR, error: err.message});
                 else {
-                    dispatch({type: types.REMOVE_SUCCESS});
-                    dispatch(reload(0))
+                    data = data.filter(function (d) {
+                        return d.id !== id
+                    });
+                    dispatch({type: types.REMOVE_SUCCESS, data: data});
                 }
             });
     }

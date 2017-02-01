@@ -4,7 +4,7 @@ var path = require('path'),
     root = path.normalize(__dirname + '/../../..');
 
 module.exports = {
-    env: 'development',
+    env: 'worker',
     elasticsearch: {
         host: '127.0.0.1:9200'
     },

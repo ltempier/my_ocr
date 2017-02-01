@@ -19,6 +19,12 @@ export default function media(state = {data: [], isLoading: false, uploadError: 
         case  types.UPLOAD_SUCCESS:
             return Object.assign({}, state);
 
+        case  types.REMOVE_ERROR:
+            return Object.assign({}, state, {error: action.error, isLoading: false});
+
+        case  types.REMOVE_SUCCESS:
+            return Object.assign({}, state, {data: action.data, isLoading: false});
+
         default:
             return state
     }

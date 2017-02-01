@@ -35,7 +35,7 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && npm install -g npm@"$NPM_VERSION" \
   && npm cache clear
 
-RUN mkdir -p /var/log/web
+RUN mkdir -p /var/log/
 
 ADD ./etc/supervisor/conf.d /etc/supervisor/conf.d
 

@@ -41,16 +41,19 @@ class File {
     read(cb) {
         const encoding = null;
         this.contents = null;
-        if (cb && _.isFunction(cb))
-            fs.readFile(this.originalFilePath, {encoding: encoding}, (err, data)=> {
-                if (err)
-                    cb(err);
-                else {
-                    this.contents = data;
-                    cb()
-                }
-            });
-        else
+        if (cb && _.isFunction(cb)) {
+            this.exists(this.originalFilePath, ()=> {
+                fs.readFile(this.originalFilePath, {encoding: encoding}, (err, data)=> {
+                    if (err)
+                        cb(err);
+                    else {
+                        this.contents = data;
+                        cb()
+                    }
+                });
+            })
+        }
+        else if (this.exists(this.originalFilePath))
             this.contents = fs.readFileSync(this.originalFilePath, {encoding: encoding})
     }
 
@@ -127,6 +130,7 @@ class File {
     }
 
     download(res) {
+        //TODO add thumbnails
         if (this.exists(this.originalFilePath)) {
             res.setHeader('Content-type', this.mime);
             res.setHeader('Content-disposition', 'attachment; filename=' + this.fileName);
