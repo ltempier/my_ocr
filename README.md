@@ -31,7 +31,7 @@ wget http://mirrors.ircam.fr/pub/apache/tika/tika-app-1.22.jar
 
 Test command line:
 ```sh
-java -jar tika-app-1.13.jar -t ./example/*.pdf
+java -jar tika-app-1.22.jar -t ./example/*.pdf
 ```
 
 Start server
